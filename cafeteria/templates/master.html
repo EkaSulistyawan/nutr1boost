@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{% block title %}{% endblock %}</title>
+  {% load bootstrap5 %}
+  {% bootstrap_css %}
+  {% bootstrap_javascript %}
+  {% load static %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+</head>
+<body>
+
+
+<div class="container">
+  <h1>Welcome to Tohoku University's Cafeteria!</h1>
+
+  {% comment %} <label for="menuSearch" class="form-label me-2">Recommend me meal!</label> {% endcomment %}
+  <form id="meal-form" method="POST" action="recommend/" class="mb-2 d-flex">
+    {% csrf_token %}
+    <input type="text" class="form-control me-2 flex-grow-1" id="query" name="query" placeholder="Recommend meals">
+    <input type="submit" value='Recommend'>
+  </form>
+  
+  {%if not recommendation_empty%}
+  <main>
+    <div class='container'>
+      <h3>Our recommendation 
+        <a href="detail/" target="_blank" class="text-decoration-none" title="Why we recommend these meals?">
+            <i class="bi bi-question-circle"></i>
+        </a>
+      </h3>
+      <p class="card-text">{{response.recommended_meal_detail}}</p>
+        <div class='row row-cols-3 g-3'>
+            {%for menu in menulist%}
+            {% if menu.recommended %}
+
+              <div class="col" >
+                  <div class="card shadow-sm menu-card fade" style="opacity: 0; transition: opacity 0.1s ease-in-out;">
+                    <img src="{{ menu.img_url }}" alt="Menu Image" class="card-img-top" style="object-fit: contain; width: 100%; height: auto;">
+                  
+                    <div class="card-body">
+                      <h5>{{menu.meal_name}} ({{menu.price}} Yen)</h5>
+                      <p class="card-text">{{menu.description}}</p>
+                      
+                      <div class="star-badge position-absolute top-0 end-0 p-2" style="border-radius: 50%; padding: 10px;">
+                        <i class="bi bi-star-fill text-warning" style="font-size: 30px;"></i> <!-- Bootstrap icon for star -->
+                      </div>
+                    </div>
+                  </div>
+              </div>
+              {% endif %}
+            {%endfor%}
+        </div>
+    </div>
+  </main>
+  {% endif %}
+
+
+  <!--Animation-->
+  <div id="blur-overlay" class="blur-overlay"></div>
+  <div id="loading" class="d-none d-flex justify-content-center align-items-center" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1050;">
+      <img src="/static/assets/img/jake_the_dog___animated_by_black_comet333_dfdgm6k.gif" alt="Loading..." style="width: 200px; height: 200px;">
+  </div>
+
+
+  
+  <main>
+    <div class='container'>
+      <h1>All menu</h1>
+        <div class='row row-cols-3'>
+            {%for menu in menulist%}
+            <div class="col" >
+                <div class="card shadow-sm menu-card fade" style="opacity: 0; transition: opacity 0.1s ease-in-out;">
+                  <img src="{{ menu.img_url }}" alt="Menu Image" class="card-img-top" style="object-fit: contain; width: 100%; height: auto;">
+                
+                  <div class="card-body">
+                    <h5>{{menu.meal_name}} ({{menu.price}} Yen)</h5>
+                    <p class="card-text">{{menu.description}}</p>
+                    
+                  </div>
+                </div>
+              </div>
+            {%endfor%}
+        </div>
+    </div>
+  </main>
+  
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Handle form submission via AJAX
+        $('#meal-form').on('submit', function(e) {
+            e.preventDefault();  // Prevent the default form submission
+
+            // Show the spinner
+            $('#loading').removeClass('d-none');
+            $('#blur-overlay').show();
+
+            // Send the AJAX request to the server
+            $.ajax({
+                url: '{% url "recommend" %}',  // Adjust to the correct URL
+                type: 'POST',
+                data: {
+                    query: $('#query').val(),
+                    csrfmiddlewaretoken: '{{ csrf_token }}',  // Include CSRF token
+                },
+                success: function(response) {
+                    // The page will be redirected here after processing
+                    // The spinner will remain visible until the redirect happens
+                    window.location.href = response.redirect_url;  // Redirect after AJAX success
+                },
+                error: function() {
+                    // Hide the spinner in case of error
+                    $('#loading').addClass('d-none');
+                    $('#blur-overlay').hide(); 
+                    alert('Error processing your request.');
+                }
+            });
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const cards = document.querySelectorAll('.menu-card');
+      cards.forEach((card, index) => {
+        // Set staggered animation delay based on index
+        setTimeout(() => {
+          card.style.opacity = '1';  // Trigger the fade-in by changing opacity
+        }, index * 20);  // 2000ms (2 seconds) for delay between cards
+      });
+    });
+</script>
+</body>
+</html>
