@@ -89,3 +89,15 @@ def recommend(request):
     request.session['response'] = response
     
     return JsonResponse({'redirect_url': reverse('user')})
+
+@csrf_exempt
+def request_current_menu_API(request):
+    menus = list(Menu.objects.filter(showmeal=True).values())
+    return JsonResponse({'menuItems':menus})
+
+@csrf_exempt
+def request_recommendation_API(request):
+    query = request.POST['query']  # Get the search query (defaults to an empty string)
+    model = LLM_Service()
+    response = model.predict(query)
+    return JsonResponse({'response':response})
