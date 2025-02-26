@@ -1,32 +1,27 @@
-from langchain.chains import RetrievalQA
-from langchain.schema import Document
-from langchain_ollama import OllamaLLM
+
+# from langchain.schema.output_parser import StrOutputParser
+# from langchain.schema.runnable import RunnableLambda
+# from langchain.schema.runnable.passthrough import RunnableAssign
+# from langchain.document_transformers import LongContextReorder
+# from langchain.text_splitter import RecursiveCharacterTextSplitter
+# from langchain.document_loaders import PyMuPDFLoader,ArxivLoader
+# from langchain.chains import RetrievalQA
+# from langchain.schema import Document
+# from langchain_ollama import OllamaLLM
+# from faiss import IndexFlatL2
+# from langchain_community.docstore.in_memory import InMemoryDocstore
+# from langchain_core.documents import Document
+
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.document_loaders import PyMuPDFLoader,ArxivLoader
 from langchain_community.vectorstores import FAISS
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_transformers import LongContextReorder
 from langchain.prompts import ChatPromptTemplate
-from langchain.schema.output_parser import StrOutputParser
-from langchain.schema.runnable import RunnableLambda
-from langchain.schema.runnable.passthrough import RunnableAssign
-
-
-from faiss import IndexFlatL2
-from langchain_community.docstore.in_memory import InMemoryDocstore
-
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.tools import TavilySearchResults
 from langgraph.graph import START, StateGraph
-
-from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate,HumanMessagePromptTemplate
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 from langchain_core.tools import tool
-from cafeteria.models import Menu
-
-
 
 from typing_extensions import List, TypedDict
 import json
