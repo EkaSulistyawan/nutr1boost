@@ -6,6 +6,7 @@ class Menu(models.Model):
     meal_type       = models.CharField(max_length=255)
     description     = models.CharField(max_length=255,null=True)
     img_name        = models.CharField(max_length=255,null=True)
+    showmeal        = models.BooleanField(default=False,null=True)
     price           = models.IntegerField()
     energy          = models.FloatField()
     protein         = models.FloatField()

@@ -32,6 +32,13 @@ import pandas as pd
 from functools import partial
 from operator import itemgetter
 
+# os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
+# os.environ["TAVILY_API_KEY"] = os.getenv("TAVILY_API_KEY")
+
+os.environ["GOOGLE_API_KEY"] = "dummy"
+os.environ["TAVILY_API_KEY"] = "dummy"
+
+
 class LLM_Service:
     def __init__(self):
         self.llm = ChatGoogleGenerativeAI(
