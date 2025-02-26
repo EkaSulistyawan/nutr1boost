@@ -5,6 +5,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.templatetags.static import static
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
 from .langchain_wrapper import LLM_Service
 from time import sleep
 
@@ -79,6 +80,7 @@ def detail(request):
     }
     return HttpResponse(template.render(context,request))
 
+@csrf_exempt
 def recommend(request):
     print("Request: ",request)
     query = request.POST['query']  # Get the search query (defaults to an empty string)

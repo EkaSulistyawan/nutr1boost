@@ -24,6 +24,9 @@ from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate,HumanMessagePromptTemplate
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 from langchain_core.tools import tool
+from cafeteria.models import Menu
+
+
 
 from typing_extensions import List, TypedDict
 import json
@@ -32,11 +35,11 @@ import pandas as pd
 from functools import partial
 from operator import itemgetter
 
-# os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
-# os.environ["TAVILY_API_KEY"] = os.getenv("TAVILY_API_KEY")
+os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
+os.environ["TAVILY_API_KEY"] = os.getenv("TAVILY_API_KEY")
 
-os.environ["GOOGLE_API_KEY"] = "dummy"
-os.environ["TAVILY_API_KEY"] = "dummy"
+# os.environ["GOOGLE_API_KEY"] = "dummy"
+# os.environ["TAVILY_API_KEY"] = "dummy"
 
 
 class LLM_Service:
@@ -57,14 +60,18 @@ class LLM_Service:
         self.paper_docs = paper_docs.as_retriever()
 
         ## test
-        df = pd.read_csv("./cafeteria/static/assets/menulist.csv")
+        # df = pd.read_csv("./cafeteria/static/assets/menulist.csv")
+        menus = list(Menu.objects.all().values())
+        df = pd.DataFrame(menus)
+        df = df[df['showmeal'] == 1]
+        print(df)
         meal_recommender = create_pandas_dataframe_agent(self.llm, 
                                                         df, 
                                                         verbose=False,
                                                         allow_dangerous_code=True,
                                                         agent_executor_kwargs={"handle_parsing_errors": True})
         
-        nutrient_list = df.columns[5:].to_list()
+        nutrient_list = ['energy','protein','fat','carbohydrate','fiber','calcium','veggies']
         nutrient_unit = ['kcal','gr','gr','gr','gr','mg','gr']
 
         class State(TypedDict):

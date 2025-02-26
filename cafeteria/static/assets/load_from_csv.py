@@ -14,6 +14,7 @@ with open('./cafeteria/static/assets/menulist.csv', newline='', encoding='utf-8'
             meal_type       = row['meal_type'],
             description     = row['description'],
             img_name        = row['img_name'],
+            showmeal        = row['showmeal'],
             price           = row['price'],
             energy          = row['energy'],
             protein         = row['protein'],
