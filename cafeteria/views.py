@@ -84,11 +84,6 @@ def recommend(request):
     query = request.POST['query']  # Get the search query (defaults to an empty string)
     model = LLM_Service()
     response = model.predict(query)
-    # response = {}
-    # response['list_meals'] = ['salmon bowl']
-    # response['recommended_meal_detail'] = ['debug']
     request.session['response'] = response
-
-    sleep(3)
     
     return JsonResponse({'redirect_url': reverse('user')})
