@@ -71,6 +71,7 @@
       <h1>All menu</h1>
         <div class='row row-cols-3'>
             {%for menu in menulist%}
+            {%if menu.showmeal == 1%}
             <div class="col" >
                 <div class="card shadow-sm menu-card fade" style="opacity: 0; transition: opacity 0.1s ease-in-out;">
                   <img src="{{ menu.img_url }}" alt="Menu Image" class="card-img-top" style="object-fit: contain; width: 100%; height: auto;">
@@ -82,6 +83,7 @@
                   </div>
                 </div>
               </div>
+              {%endif%}
             {%endfor%}
         </div>
     </div>
