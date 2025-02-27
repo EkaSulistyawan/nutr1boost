@@ -17,25 +17,7 @@ COPY . .
 RUN python3 -m venv /venv
 ENV PATH="/venv/bin:$PATH"
 
-RUN pip3 install \
-    langchain \
-    langgraph \ 
-    langchain-community \
-    langchain-google-genai \
-    langchain-experimental \
-    pandas \
-    numpy \
-    faiss-cpu \
-    tavily-python \
-    typing-extensions \
-    django-bootstrap-v5 \
-    django-cors-headers \
-    google-generativeai \
-    openai \
-    tiktoken \
-    nest-asyncio \
-    sentence-transformers \
-    tabulate
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 
 CMD ["python","manage.py","runserver","0.0.0.0:8000"]
