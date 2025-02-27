@@ -1,12 +1,31 @@
 
+# Table of Contents
+- [Table of Contents](#table-of-contents)
+- [List of URLs](#list-of-urls)
+- [API Specification](#api-specification)
+  - [\>\>\>\>\> Retrieve current menu](#-retrieve-current-menu)
+  - [\>\>\>\>\> Do recommendation](#-do-recommendation)
+- [Docker Preparation](#docker-preparation)
+
+# List of URLs
+|URL|Description|Output|
+|---|-----------|----------|
+|`index`|Base page, normally just go to site. It shows the front page for user where you can see the current menu and do `recommend`|URL `index`|
+|`recommend`|URL to recommend the menu upon clicking button. Recommendation is set under `session[response]`|URL `index`|
+|`detail`|URL to show detail of reasons behind the recommendation|URL `detail`|
+|`request_current_menu_API`|API to request current menu. [Detail](#-retrieve-current-menu)|JSON|
+|`request_recommendation_API`|API to do recommendation. [Detail](#-do-recommendation)|JSON|
+|`officer/change_menu`|URL for admin to change current menu|URL `officer/register_current_menu`|
+|`officer/register_current_menu`|URL that assign current menu, i.e., set `showmeal` of the selected meals to `True` in the database|`None`|
+
 # API Specification
-# >>>>> Retrieve current menu
+## >>>>> Retrieve current menu
 
 This API will give you the current meals served by the cafeteria. Admin must change the `showmeal` for every current meals served.
 
 **Method**: `GET`
 
-**URL**:`/request_current_menu_API/`
+**URL**:`request_current_menu_API/`
 
 **Response**:
 |Field|Value|Description|
@@ -30,67 +49,19 @@ This API will give you the current meals served by the cafeteria. Admin must cha
 {
     "menuItems": [
         {
-            "id": 88,
-            "meal_name": "Fried white fish",
-            "meal_type": "alacarte",
+            "id": 76,
+            "meal_name": "Salmon Bowl",
+            "meal_type": "main",
             "description": "test description",
-            "img_name": "fried-white-fish.png",
+            "img_name": "salmon-bowl.png",
             "showmeal": true,
-            "price": 121,
-            "energy": 226.0,
-            "protein": 5.5,
-            "fat": 16.7,
-            "carbohydrate": 12.4,
-            "fiber": 0.5,
-            "calcium": 11.0,
-            "veggies": 0.0
-        },
-        {
-            "id": 89,
-            "meal_name": "Hashed Potato",
-            "meal_type": "alacarte",
-            "description": "test description",
-            "img_name": "hashed-potato.png",
-            "showmeal": true,
-            "price": 88,
-            "energy": 215.0,
-            "protein": 1.2,
-            "fat": 16.7,
-            "carbohydrate": 14.8,
-            "fiber": 0.7,
-            "calcium": 0.0,
-            "veggies": 0.0
-        },
-        {
-            "id": 94,
-            "meal_name": "Lotus root sauteed in sugar and soy sauce",
-            "meal_type": "alacarte",
-            "description": "test description",
-            "img_name": "lotus-root-sauteed-in-sugar-and-soy-sauce.png",
-            "showmeal": true,
-            "price": 66,
-            "energy": 48.0,
-            "protein": 0.8,
-            "fat": 1.2,
-            "carbohydrate": 9.2,
-            "fiber": 0.8,
-            "calcium": 16.0,
-            "veggies": 28.0
-        },
-        {
-            "id": 95,
-            "meal_name": "Rice (small)",
-            "meal_type": "alacarte",
-            "description": "test description",
-            "img_name": "rice-small.png",
-            "showmeal": true,
-            "price": 77,
-            "energy": 221.0,
-            "protein": 3.9,
-            "fat": 0.0,
-            "carbohydrate": 48.1,
-            "fiber": 0.0,
-            "calcium": 0.0,
+            "price": 561,
+            "energy": 555.0,
+            "protein": 18.4,
+            "fat": 7.1,
+            "carbohydrate": 97.9,
+            "fiber": 2.6,
+            "calcium": 4.0,
             "veggies": 0.0
         }
     ]
@@ -101,12 +72,12 @@ This API will give you the current meals served by the cafeteria. Admin must cha
 - This approach needs `admin` to modify the menu.
 
 
-# >>>>> Do recommendation
+## >>>>> Do recommendation
 This API will provide recommendation.
 
 **Method**: `POST`
 
-**URL**:`request_recommendation_API`
+**URL**:`request_recommendation_API/`
 
 **Request Body**:
 ```
@@ -157,3 +128,27 @@ This API will provide recommendation.
 **Notes:**
 - I haven't implement reasoning for each recommended meal.
 - Meal could be combined, so expect `list_of_meals` grows. Sometimes the LLM recommend combinations of meal to satisfy the nutrients, thus one reasons is needed. 
+
+# Docker Preparation
+
+Make sure you install docker and run the service. [Getting started with Docker](https://docs.docker.com/desktop/setup/install/windows-install/)
+
+Step to reproduce docker image (tested on Windows 11)
+
+(1) Clone the repo
+
+(2) Go to directory where `Dockerfile` is stored
+
+(3) Run the following script on command prompt to make the image,
+```
+docker build -t nutr1boost:1.0 .
+```
+
+(4) Run the following script in command prompt to run the image
+```
+docker run -it -p 127.0.0.1:8000:8000 -e GOOGLE_API_KEY=<your gemini api key> -e TAVILY_API_KEY=<your tavily key> nutr1boost:1.0
+```
+
+This step sets up everything you need to run the LLM. If you wish to change any interface of the LLM, you may want to modify the file where the LLM is used. `cafeteria/langchain_wrapper.py`
+
+(5) Open browser and go to `127.0.0.1:8000`
