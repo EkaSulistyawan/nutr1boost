@@ -20,7 +20,7 @@
   <form id="meal-form" method="POST" action="recommend/" class="mb-2 d-flex">
     {% csrf_token %}
     <input type="text" class="form-control me-2 flex-grow-1" id="query" name="query" placeholder="Recommend meals">
-    <input type="submit" value='Recommend'>
+    <input type="submit" class='btn btn-dark' value='Recommend'>
   </form>
   
   {%if not recommendation_empty%}
