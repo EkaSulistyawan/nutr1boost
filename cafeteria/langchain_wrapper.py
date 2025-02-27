@@ -190,11 +190,3 @@ class LLM_Service:
             'additional_notes':query,
             'verbose_in_function':True
         })
-                
-        
-
-
-
-
-
-
