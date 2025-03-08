@@ -13,6 +13,7 @@ from .langchain_wrapper import LLM_Service
 from .object_detection_wrapper import object_detection
 from time import sleep
 from PIL import Image
+import pandas as pd
 
 import json
 
@@ -97,8 +98,43 @@ def recommend(request):
 
 @csrf_exempt
 def request_current_menu_API(request):
-    menus = list(Menu.objects.filter(showmeal=True).values())
-    return JsonResponse({'menuItems':menus})
+    menus = pd.DataFrame(Menu.objects.filter(showmeal=True).values())
+    menus['variant'] = menus['meal_name'].str.extract(r"\((small|middle|large)\)", expand=True)
+    menus['variant'].fillna("single", inplace=True)
+    menus['meal_name'] = menus['meal_name'].str.replace(r"\s*\((small|middle|large)\)", "", regex=True)
+    menus['food_group'] = menus['meal_name'].factorize()[0] + 1
+    # Group by `meal_name` to create the desired JSON structure
+    result = []
+    for meal_name, group in menus.groupby("meal_name"):
+        food_item = {
+            "foodId": int(group["food_group"].iloc[0]),  # Get food_group (foodId)
+            "name": meal_name,
+            "url": f"/static/assets/img/{group['img_name'].iloc[0]}",  # Generate image URL
+            "variants": []
+        }
+        
+        # Add variants for the meal
+        for _, row in group.iterrows():
+            variant = {
+                "variantName": row["variant"].capitalize(),
+                "variantId": int(row["id"]),
+                "price": row["price"],
+                "calories": row["energy"],
+                "protein": row["protein"],
+                "fat": row["fat"],
+                "carbohydrates": row["carbohydrate"]
+            }
+            food_item["variants"].append(variant)
+        
+        result.append(food_item)
+
+    # Construct the final JSON format
+    final_json = {
+        "category": "Meals",  # You can modify the category if necessary
+        "items": result
+    }
+    print(final_json)
+    return JsonResponse(final_json)
 
 @csrf_exempt
 def request_recommendation_API(request):

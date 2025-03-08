@@ -6,7 +6,7 @@
 import csv
 from cafeteria.models import Menu
 
-with open('./cafeteria/static/assets/menulist_v2.csv', newline='', encoding='utf-8') as file:
+with open('./cafeteria/static/assets/menulist_v3.csv', newline='', encoding='utf-8') as file:
     reader = csv.DictReader(file)
     data = [
         Menu(
