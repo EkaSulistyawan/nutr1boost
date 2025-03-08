@@ -29,22 +29,17 @@ class MenuDataset(Dataset):
 
         return image,label
 
-batch_size = 8
-num_epochs = 100
-
-image_dir   = "./object_classification_batch_1/"
-label_path  = "./object_classification_batch_1.csv"
+# image_dir   = "./object_classification_batch_1/"
+# label_path  = "./object_classification_batch_1.csv"
+odd_ths     = 2
 class_path  = "./classes.txt"
-trainidx    = 7
-
 # make label's hot encoding
-label   = pd.read_csv(label_path,header=None,names=['filename','class']).reset_index(drop=True).set_index('class')
+# label   = pd.read_csv(label_path,header=None,names=['filename','class']).reset_index(drop=True).set_index('class')
 # # load the classes, make classes hot encoded
 classes = pd.read_csv(class_path,header=None,names=['class'])
 classes = classes.join(pd.get_dummies(classes)).set_index('class')
-label   = label.join(classes,how='inner').reset_index(drop=True).set_index('filename')
+# label   = label.join(classes,how='inner').reset_index(drop=True).set_index('filename')
 
-print(classes)
 
 
 
@@ -64,23 +59,11 @@ model = models.efficientnet_b2(pretrained=False)
 num_classes = len(classes)
 model.classifier[1] = nn.Linear(model.classifier[1].in_features,num_classes)
 
-model.load_state_dict(torch.load(f"./trained_model/train{trainidx}_100.pth"))
+model.load_state_dict(torch.load(f"./trained_model/train2.pth"))
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model.to(device)
 model.eval()
-
-# # load image and crop it to 512, 512
-# parser = argparse.ArgumentParser(description="Load an image with a formatted filename.")
-# parser.add_argument("num", type=int, help="Image index (e.g., 0 for patch_000.jpg)")
-# idx = parser.parse_args().num
-# im = Image.open(f"./test_object_classification_batch_1/patch_{idx:03d}.jpg").convert('RGB')
-# prediction = model(transform(im).unsqueeze(0)).detach()
-
-# whichmenu = torch.argmax(prediction[0])
-# odd = torch.max(prediction[0])
-# print(classes.columns.to_list()[whichmenu].replace('class_',''), odd)
-
 
 parser = argparse.ArgumentParser(description="Load an image with a formatted filename.")
 parser.add_argument("image_path", type=str, help="Image Path, include extension")
@@ -111,7 +94,7 @@ for i in range(0, npim.shape[0] - imsz + 1, step):
         odd = torch.max(prediction[0])
 
         menuname = classes.columns.to_list()[whichmenu].replace('class_','')
-        if odd > 5:
+        if odd > odd_ths:
             menus.add(menuname)
             odds.append(odd)
 

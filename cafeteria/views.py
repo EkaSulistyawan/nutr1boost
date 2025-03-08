@@ -10,7 +10,9 @@ from django.contrib.auth.decorators import user_passes_test, login_required
 
 
 from .langchain_wrapper import LLM_Service
+from .object_detection_wrapper import object_detection
 from time import sleep
+from PIL import Image
 
 import json
 
@@ -103,6 +105,14 @@ def request_recommendation_API(request):
     query = request.POST['query']  # Get the search query (defaults to an empty string)
     model = LLM_Service()
     response = model.predict(query)
+    return JsonResponse({'response':response})
+
+@csrf_exempt
+def detect_current_menu_API(request):
+    im = request.FILES['image_upload']
+    im = Image.open(im)
+    model = object_detection(imsz=512,odd_ths=4)
+    response = model.predict(im)
     return JsonResponse({'response':response})
 
 
