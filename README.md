@@ -5,6 +5,7 @@
 - [API Specification](#api-specification)
   - [\>\>\>\>\> Retrieve current menu](#-retrieve-current-menu)
   - [\>\>\>\>\> Do recommendation](#-do-recommendation)
+  - [\>\>\>\>\> Parse menu](#-parse-menu)
 - [Docker Preparation](#docker-preparation)
 
 # List of URLs
@@ -128,6 +129,29 @@ This API will provide recommendation.
 **Notes:**
 - I haven't implement reasoning for each recommended meal.
 - Meal could be combined, so expect `list_of_meals` grows. Sometimes the LLM recommend combinations of meal to satisfy the nutrients, thus one reasons is needed. 
+
+
+## >>>>> Parse menu
+This API will provide recommendation.
+
+**Method**: `POST`
+
+**URL**:`detect_current_menu/`
+
+**Request Body**:
+```
+'image_upload' : Image file
+```
+**Response**:
+|Field|Value|Description|
+|-----|-----|-----------|
+|`response`|JSON|Keys are the file stored file name. Can remove the `.png` for generalization. The value is the odd of that particular meal exist on the uploaded picture|
+
+
+**Example Response (POSTMAN output)**
+```
+{"response": {"homemade-curry.png": 9.086359024047852, "chicken-cutlet.png": 8.386346817016602, "stewed-liver-with-satsuma-herb-chicken.png": 5.788483619689941, "boiled-spinach-with-sesame-paste.png": 13.255047798156738, "miso-soup.png": 9.482758522033691, "salt-grilled-mackerel.png": 5.884803771972656, "simmered-bamboo-shoots-with-katsuobushi.png": 4.561811447143555, "miso-soup-with-pork-and-vegetables.png": 8.705536842346191, "fried-pork-belly-rice-bowl.png": 8.39055347442627, "hamburger-steak-with-grated-japanese-radish-sauce.png": 6.475904941558838, "bang-bang-chicken-salada.png": 11.591764450073242, "potato-salad.png": 5.213132381439209, "grilled-pork-with-soybean-rice-bowl.png": 5.803318500518799, "vegetarian-curry.png": 4.76001501083374, "rice.png": 9.551331520080566, "mackerel-stewed-with-ginger.png": 5.954055309295654}}
+```
 
 # Docker Preparation
 
