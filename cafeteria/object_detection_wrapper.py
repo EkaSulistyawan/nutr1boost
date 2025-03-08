@@ -37,8 +37,8 @@ class object_detection:
         npim = np.array(im)
         step = self.imsz // 2  # 256-pixel overlap
 
-        menus = list()
-        odds = list()
+
+        response = {}
 
         for i in range(0, npim.shape[0] - self.imsz + 1, step):
             for j in range(0, npim.shape[1] - self.imsz + 1, step):
@@ -55,13 +55,12 @@ class object_detection:
                 odd = torch.max(prediction[0])
 
                 menuname = self.classes.columns.to_list()[whichmenu].replace('class_','')
+                menuname = f"{menuname}.png"
                 if odd > self.odd_ths:
-                    if menuname not in menus:
-                        menus.append(menuname)
-                        odds.append(odd.item())
+                    if menuname not in response.keys():
+                        response[menuname] = odd.item()
+                    elif odd > response[menuname]: # change the existing one if it has higher odd
+                        response[menuname] = odd.item()
 
-        print(menus,odds)
-        return {
-            'menus':menus,
-            'odd':odds
-        }
+        print(response)
+        return response
