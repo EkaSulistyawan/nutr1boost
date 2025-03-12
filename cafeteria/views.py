@@ -151,7 +151,7 @@ def detect_current_menu_API(request):
     
     im = request.FILES['image_upload']
     im = Image.open(im)
-    method = request.POST.get('method', 'EfficientNet')
+    method = request.POST.get('method', 'All')
 
     Menu.objects.update(showmeal=False)
 
