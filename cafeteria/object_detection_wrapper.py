@@ -55,12 +55,11 @@ class object_detection:
                 odd = torch.max(prediction[0])
 
                 menuname = self.classes.columns.to_list()[whichmenu].replace('class_','')
-                menuname = f"{menuname}.png"
+                # menuname = f"{menuname}.png"
                 if odd > self.odd_ths:
                     if menuname not in response.keys():
                         response[menuname] = odd.item()
                     elif odd > response[menuname]: # change the existing one if it has higher odd
                         response[menuname] = odd.item()
 
-        print(response)
         return response
