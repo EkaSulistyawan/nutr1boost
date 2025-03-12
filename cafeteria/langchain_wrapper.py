@@ -158,7 +158,7 @@ class LLM_Service:
             attempt = 0
             while len(list_of_meal) == 0:
                 attempt +=1 
-                if state['verbose_in_function']: print('Cookign attempt : ',attempt)
+                if state['verbose_in_function']: print('Cooking attempt : ',attempt)
                 stringify_recommendation = ""
                 for a in range(len(nutrient_list)):
                     stringify_recommendation += f"{nutrient_list[a]}: {(state['min_nutritions'][a] / 3):.1f} {nutrient_unit[a]}, "
