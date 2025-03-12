@@ -31,11 +31,19 @@ import pandas as pd
 from functools import partial
 from operator import itemgetter
 
-os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
-os.environ["TAVILY_API_KEY"] = os.getenv("TAVILY_API_KEY")
+if os.getenv("GOOGLE_API_KEY") == None:
+    GOOGLE_API_KEY = '<insert password!>'
+else:
+    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# os.environ["GOOGLE_API_KEY"] = "dummy"
-# os.environ["TAVILY_API_KEY"] = "dummy"
+if os.getenv("TAVILY_API_KEY") == None:
+    TAVILY_API_KEY = '<insert password!>'
+else:
+    TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+
+
+os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
+os.environ["TAVILY_API_KEY"] = TAVILY_API_KEY
 
 
 class LLM_Service:
@@ -60,7 +68,6 @@ class LLM_Service:
         menus = list(Menu.objects.all().values())
         df = pd.DataFrame(menus)
         df = df[df['showmeal'] == 1]
-        print(df)
         meal_recommender = create_pandas_dataframe_agent(self.llm, 
                                                         df, 
                                                         verbose=False,

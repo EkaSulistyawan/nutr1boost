@@ -3,6 +3,7 @@ from django.db import models
 # Create your models here.
 class Menu(models.Model):
     meal_name       = models.CharField(max_length=255)
+    ja_meal_name    = models.CharField(max_length=255,null=True)
     meal_type       = models.CharField(max_length=255)
     description     = models.CharField(max_length=255,null=True)
     img_name        = models.CharField(max_length=255,null=True)

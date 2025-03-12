@@ -6,11 +6,12 @@
 import csv
 from cafeteria.models import Menu
 
-with open('./cafeteria/static/assets/menulist_v3.csv', newline='', encoding='utf-8') as file:
+with open('./cafeteria/static/assets/menulist_v4_jaMealName_jaSupport.csv', newline='', encoding='utf-8-sig') as file:
     reader = csv.DictReader(file)
     data = [
         Menu(
             meal_name       = row['meal_name'],
+            ja_meal_name    = row['ja_meal_name'],
             meal_type       = row['meal_type'],
             description     = row['description'],
             img_name        = row['img_name'],

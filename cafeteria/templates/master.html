@@ -41,7 +41,7 @@
                     <img src="{{ menu.img_url }}" alt="Menu Image" class="card-img-top" style="object-fit: contain; width: 100%; height: auto;">
                   
                     <div class="card-body">
-                      <h5>{{menu.meal_name}} ({{menu.price}} Yen)</h5>
+                      <h5>{{menu.meal_name}} ({{menu.ja_meal_name}}) (Price: {{menu.price}} Yen)</h5>
                       <p class="card-text">{{menu.description}}</p>
                       
                       <div class="star-badge position-absolute top-0 end-0 p-2" style="border-radius: 50%; padding: 10px;">
@@ -77,7 +77,9 @@
                   <img src="{{ menu.img_url }}" alt="Menu Image" class="card-img-top" style="object-fit: contain; width: 100%; height: auto;">
                 
                   <div class="card-body">
-                    <h5>{{menu.meal_name}} ({{menu.price}} Yen)</h5>
+                    <h5>{{menu.meal_name}}</h5>
+                    <h5>{{menu.ja_meal_name}}</h5>
+                    <h5>({{menu.price}} Yen)</h5>
                     <p class="card-text">{{menu.description}}</p>
                     
                   </div>
