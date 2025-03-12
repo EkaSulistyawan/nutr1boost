@@ -3,15 +3,15 @@ Salmon Rice Bowl,鮭丼,main,test description,salmon-rice-bowl.png,1,561,555,18.
 Grilled pork rice bowl (small),豚焼肉丼（小）,main,test description,grilled-pork-rice-bowl.png,1,407,549,19.9,15.4,75.9,2.1,1,37
 Grilled pork rice bowl (middle),豚焼肉丼（中）,main,test description,grilled-pork-rice-bowl.png,1,473,754,28.1,20.4,105.6,2.8,1,52
 Grilled pork rice bowl (large),豚焼肉丼（大）,main,test description,grilled-pork-rice-bowl.png,1,561,988,38.4,26.9,136.6,3.8,1,72
-Homemade Curry with Cutlets (small),自家製ヒレカシカレー（小）,main,test description,homemade-curry-with-cutlets.png,1,390,638,17.3,21.2,90.4,2.8,32,56
-Homemade Curry with Cutlets (middle),自家製ヒレカシカレー（中）,main,test description,homemade-curry-with-cutlets.png,1,501,958,26.8,34.1,129.9,4.1,46,79
-Homemade Curry with Cutlets (large),自家製ヒレカシカレー（大）,main,test description,homemade-curry-with-cutlets.png,1,610,1313,38,49.2,171.9,5.7,66,114
+Homemade Curry with Cutlets (small),自家製ヒレカツカレー（小）,main,test description,homemade-curry-with-cutlets.png,1,390,638,17.3,21.2,90.4,2.8,32,56
+Homemade Curry with Cutlets (middle),自家製ヒレカツカレー（中）,main,test description,homemade-curry-with-cutlets.png,1,501,958,26.8,34.1,129.9,4.1,46,79
+Homemade Curry with Cutlets (large),自家製ヒレカツカレー（大）,main,test description,homemade-curry-with-cutlets.png,1,610,1313,38,49.2,171.9,5.7,66,114
 Homemade Curry (small),自家製カレー（小）,main,test description,homemade-curry.png,1,286,519,12.4,13.6,83,2.4,28,56
 Homemade Curry (middle),自家製カレー（中）,main,test description,homemade-curry.png,1,341,0,0,17.8,115.2,3.3,39,79
 Homemade Curry (large),自家製カレー（大）,main,test description,homemade-curry.png,1,396,956,23.2,26.3,149.6,4.5,55,114
 Mackerel stewed with ginger,さば生姜煮,alacarte,test description,mackerel-stewed-with-ginger.png,1,242,208,9.5,14.2,5.6,0.8,5,0
 Hamburger steak with grated Japanese radish sauce,ハンバーグ（おろし）,alacarte,test description,hamburger-steak-with-grated-japanese-radish-sauce.png,1,209,239,14.9,14.1,12,1.6,99,23
-Chicken cutlet,チキンカシ,alacarte,test description,chicken-cutlet.png,1,187,231,12.9,14.6,12.2,0.4,0,0
+Chicken cutlet,チキンカツ,alacarte,test description,chicken-cutlet.png,1,187,231,12.9,14.6,12.2,0.4,0,0
 Fried white fish,白身魚フライ,alacarte,test description,fried-white-fish.png,1,121,226,5.5,16.7,12.4,0.5,11,0
 Hashed Potato,ハッシュブラウン,alacarte,test description,hashed-potato.png,1,88,215,1.2,16.7,14.8,0.7,0,0
 Fried Dumplings,揚げ餃子,alacarte,test description,fried-dumplings.png,1,66,87,2.6,4.7,8.6,0.4,8,13
@@ -40,9 +40,9 @@ Fried-Pork-Belly-Rice bowl (large),豚バラ揚げ煮丼（大）,main,test desc
 Grilled-Salmon-With-Japanese marinade,焼鮭の和風マリネ,alacarte,test description,grilled-salmon-with-japanese-marinade.png,1,198,0,0,0,0,0,0,0
 Soy-Sauce-Taste-Boiled-Dried-Daikon-Radish strips,切干大根,alacarte,test description,soy-sauce-taste-boiled-dried-daikon-radish-strips.png,1,66,22,1,0.6,3.2,0.4,23,29
 Broccoli broccoli,ブロッコリー,alacarte,test description,broccoli.png,1,66,87,2.2,7.9,2.2,0.2,15,50
-Miso-Fillet-Cutlet-Rice bowl (small),みそヒレカシ丼（小）,main,test description,miso-fillet-cutlet-rice-bowl.png,1,451,603,16.9,17.4,90.3,1.9,43,0
-Miso-Fillet-Cutlet-Rice bowl (middle),みそヒレカシ丼（中）,main,test description,miso-fillet-cutlet-rice-bowl.png,1,533,860,24.4,25.2,127.2,2.7,47,0
-Miso-Fillet-Cutlet-Rice bowl (large),みそヒレカシ丼（大）,main,test description,miso-fillet-cutlet-rice-bowl.png,1,635,1121,32,33.1,165.2,3.7,50,0
+Miso-Fillet-Cutlet-Rice bowl (small),みそヒレカツ丼（小）,main,test description,miso-fillet-cutlet-rice-bowl.png,1,451,603,16.9,17.4,90.3,1.9,43,0
+Miso-Fillet-Cutlet-Rice bowl (middle),みそヒレカツ丼（中）,main,test description,miso-fillet-cutlet-rice-bowl.png,1,533,860,24.4,25.2,127.2,2.7,47,0
+Miso-Fillet-Cutlet-Rice bowl (large),みそヒレカツ丼（大）,main,test description,miso-fillet-cutlet-rice-bowl.png,1,635,1121,32,33.1,165.2,3.7,50,0
 Grilled-Pork-With-Soybean-Rice bowl (small),豚みそ焼肉丼（小）,main,test description,grilled-pork-with-soybean-rice-bowl.png,1,385,518,20.4,11.5,77.3,1.2,0,35
 Grilled-Pork-With-Soybean-Rice bowl (middle),豚みそ焼肉丼（中）,main,test description,grilled-pork-with-soybean-rice-bowl.png,1,473,726,29,16.5,107,1.7,0,50
 Grilled-Pork-With-Soybean-Rice bowl (large),豚みそ焼肉丼（大）,main,test description,grilled-pork-with-soybean-rice-bowl.png,1,583,967,39.6,23,139.9,2.4,0,70

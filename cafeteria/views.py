@@ -7,6 +7,8 @@ from django.templatetags.static import static
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import user_passes_test, login_required
+from django.db.models import F, Value, Func
+from django.db.models.functions import Replace
 
 
 from .langchain_wrapper import LLM_Service
@@ -15,6 +17,7 @@ from .ocr_wrapper import ocr
 from time import sleep
 from PIL import Image
 import pandas as pd
+import Levenshtein
 
 import json
 
@@ -142,18 +145,57 @@ def request_recommendation_API(request):
     response = model.predict(query)
     return JsonResponse({'response':response})
 
+
 @csrf_exempt
 def detect_current_menu_API(request):
+    
     im = request.FILES['image_upload']
     im = Image.open(im)
     method = request.POST.get('method', 'EfficientNet')
-    
+
+    Menu.objects.update(showmeal=False)
+
     if method == 'EfficientNet':
         model = object_detection(imsz=512,odd_ths=4)
         response = model.predict(im)
+        # filter those data that is inside 
+        # append .png to the end of response keys
+        matching_key = [f"{xx}.png" for xx in response.keys()]
+        Menu.objects.filter(img_name__in=matching_key).update(showmeal=True)
+
     elif method == 'EasyOCR':
         model = ocr()
         response = model.predict(im)
+        matching_key = [xx for xx in response.keys()]
+        database_key = [xx for xx in pd.DataFrame(Menu.objects.all().values())['ja_meal_name'].tolist()]
+        # get except the last 
+        matches = [
+            db_key for db_key in database_key
+            if any(Levenshtein.distance(db_key.replace('（大）', '').replace('（小）', '').replace('（中）', ''), key) <= 2 for key in matching_key)
+        ]
+        Menu.objects.filter(ja_meal_name__in=matches).update(showmeal=True)
+
+    elif method=='All':
+        response = {}
+        model = object_detection(imsz=512,odd_ths=4)
+        response['EfficientNet'] = model.predict(im)
+        # filter those data that is inside 
+        # append .png to the end of response keys
+        matching_key = [f"{xx}.png" for xx in response['EfficientNet'].keys()]
+        Menu.objects.filter(img_name__in=matching_key).update(showmeal=True)
+
+        model = ocr()
+        response['EasyOCR'] = model.predict(im)
+        matching_key = [xx for xx in response['EasyOCR'].keys()]
+        database_key = [xx for xx in pd.DataFrame(Menu.objects.all().values())['ja_meal_name'].tolist()]
+        # get except the last 
+        matches = [
+            db_key for db_key in database_key
+            if any(Levenshtein.distance(db_key.replace('（大）', '').replace('（小）', '').replace('（中）', ''), key) <= 2 for key in matching_key)
+        ]
+        Menu.objects.filter(ja_meal_name__in=matches).update(showmeal=True)
+
+
     return JsonResponse({'response':response})
 
 
