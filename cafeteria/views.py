@@ -11,13 +11,12 @@ from django.contrib.auth.decorators import user_passes_test, login_required
 
 from .langchain_wrapper import LLM_Service
 from .object_detection_wrapper import object_detection
+from .ocr_wrapper import ocr
 from time import sleep
 from PIL import Image
 import pandas as pd
 
 import json
-
-## for prediction
 
 
 # Create your views here.
@@ -147,8 +146,14 @@ def request_recommendation_API(request):
 def detect_current_menu_API(request):
     im = request.FILES['image_upload']
     im = Image.open(im)
-    model = object_detection(imsz=512,odd_ths=4)
-    response = model.predict(im)
+    method = request.POST.get('method', 'EfficientNet')
+    
+    if method == 'EfficientNet':
+        model = object_detection(imsz=512,odd_ths=4)
+        response = model.predict(im)
+    elif method == 'EasyOCR':
+        model = ocr()
+        response = model.predict(im)
     return JsonResponse({'response':response})
 
 
