@@ -32,27 +32,6 @@ import json
 llm_model = LLM_Service()
 obj_detect_model = object_detection(imsz=512,odd_ths=4)
 easyocr_model = ocr()
-GCP_CLIENT_SECRET = os.getenv("GCP_CLIENT_SECRET")
-if GCP_CLIENT_SECRET == None:
-    GCP_CLIENT_SECRET = ''
-
-SCOPES = ["https://www.googleapis.com/auth/drive"]
-client_config = {
-    "installed":{
-        "client_id":"253879512770-0ot833ecqqo5ndk7a0me08u0upi2l931.apps.googleusercontent.com",
-        "project_id":"iconic-baton-453304-b6",
-        "auth_uri":"https://accounts.google.com/o/oauth2/auth",
-        "token_uri":"https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
-        "client_secret":GCP_CLIENT_SECRET,"redirect_uris":["http://localhost"]}}
-# Set up OAuth authentication
-flow = InstalledAppFlow.from_client_config(
-    client_config,  # Specify the OAuth client ID JSON obtained from GCP
-    SCOPES
-)
-credentials = flow.run_local_server(port=0)  # Open a login screen for authentication
-# Create a Google Drive API client
-drive_service = build("drive", "v3", credentials=credentials)
 googleocr_model = GoogleOCR()
 
 # Create your views here.
