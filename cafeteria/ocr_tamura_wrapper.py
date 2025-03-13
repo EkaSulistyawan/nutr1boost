@@ -11,38 +11,38 @@ from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-# drive_service is defined in the beginning of views
-GCP_CLIENT_SECRET = os.getenv("GCP_CLIENT_SECRET")
-if GCP_CLIENT_SECRET == None:
-    GCP_CLIENT_SECRET = ''
-
-SCOPES = ["https://www.googleapis.com/auth/drive"]
-client_config = {
-    "installed":{
-        "client_id":"253879512770-0ot833ecqqo5ndk7a0me08u0upi2l931.apps.googleusercontent.com",
-        "project_id":"iconic-baton-453304-b6",
-        "auth_uri":"https://accounts.google.com/o/oauth2/auth",
-        "token_uri":"https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
-        "client_secret":GCP_CLIENT_SECRET,"redirect_uris":["http://localhost"]}}
-# Set up OAuth authentication
-flow = InstalledAppFlow.from_client_config(
-    client_config,  # Specify the OAuth client ID JSON obtained from GCP
-    SCOPES
-)
-credentials = flow.run_local_server(port=0)  # Open a login screen for authentication
-# Create a Google Drive API client
-drive_service = build("drive", "v3", credentials=credentials)
-
 class GoogleOCR:
     def __init__(self,prob_ths=0.5,imsz=700,device='cpu'):
         self.device = device
-        
         self.prob_ths = prob_ths
         self.imsz = imsz
+
+        # self.drive_service is defined in the beginning of views
+        GCP_CLIENT_SECRET = os.getenv("GCP_CLIENT_SECRET")
+        if GCP_CLIENT_SECRET == None:
+            GCP_CLIENT_SECRET = ''
+
+        SCOPES = ["https://www.googleapis.com/auth/drive"]
+        client_config = {
+            "installed":{
+                "client_id":"253879512770-0ot833ecqqo5ndk7a0me08u0upi2l931.apps.googleusercontent.com",
+                "project_id":"iconic-baton-453304-b6",
+                "auth_uri":"https://accounts.google.com/o/oauth2/auth",
+                "token_uri":"https://oauth2.googleapis.com/token",
+                "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
+                "client_secret":GCP_CLIENT_SECRET,"redirect_uris":["http://localhost"]}}
+        # Set up OAuth authentication
+        flow = InstalledAppFlow.from_client_config(
+            client_config,  # Specify the OAuth client ID JSON obtained from GCP
+            SCOPES
+        )
+        credentials = flow.run_local_server(port=0)  # Open a login screen for authentication
+        # Create a Google Drive API client
+        self.drive_service = build("drive", "v3", credentials=credentials)
+
     
     def get_text_from_doc(self,doc_id):
-        request = drive_service.files().export_media(fileId=doc_id, mimeType="text/plain")
+        request = self.drive_service.files().export_media(fileId=doc_id, mimeType="text/plain")
         content = request.execute()
         return content.decode("utf-8")
 
@@ -53,8 +53,8 @@ class GoogleOCR:
         #     "mimeType": "application/vnd.google-apps.document",
         # }
         media = MediaFileUpload(image_path, mimetype="image/png")
-        # file = drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
-        updated_file = drive_service.files().update(
+        # file = self.drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+        updated_file = self.drive_service.files().update(
             fileId='10SdTXRMXKe2OWIWVf8v7pc7B40kCwc-RH0go4jEUrzU',
             media_body=media,  # The new file content you want to upload
             fields="id"  # Specify the fields you want to retrieve (in this case, only the file ID)
@@ -84,7 +84,8 @@ class GoogleOCR:
                 id = self.upload_image(patch_filename)
                 text  = self.get_text_from_doc(id)
 
-                for txt in text:
+                for txt in text.split():
+                    print(txt)
                     response[txt] = 0.0
 
         return response
