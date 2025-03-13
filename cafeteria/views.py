@@ -21,6 +21,10 @@ import Levenshtein
 
 import json
 
+# init model
+llm_model = LLM_Service()
+obj_detect_model = object_detection(imsz=512,odd_ths=4)
+easyocr_model = ocr()
 
 # Create your views here.
 def user(request):
@@ -141,8 +145,7 @@ def request_current_menu_API(request):
 @csrf_exempt
 def request_recommendation_API(request):
     query = request.POST['query']  # Get the search query (defaults to an empty string)
-    model = LLM_Service()
-    response = model.predict(query)
+    response = llm_model.predict(query)
     return JsonResponse({'response':response})
 
 
@@ -156,16 +159,14 @@ def detect_current_menu_API(request):
     Menu.objects.update(showmeal=False)
 
     if method == 'EfficientNet':
-        model = object_detection(imsz=512,odd_ths=4)
-        response = model.predict(im)
+        response = obj_detect_model.predict(im)
         # filter those data that is inside 
         # append .png to the end of response keys
         matching_key = [f"{xx}.png" for xx in response.keys()]
         Menu.objects.filter(img_name__in=matching_key).update(showmeal=True)
 
     elif method == 'EasyOCR':
-        model = ocr()
-        response = model.predict(im)
+        response = easyocr_model.predict(im)
         matching_key = [xx for xx in response.keys()]
         database_key = [xx for xx in pd.DataFrame(Menu.objects.all().values())['ja_meal_name'].tolist()]
         # get except the last 
@@ -177,15 +178,13 @@ def detect_current_menu_API(request):
 
     elif method=='All':
         response = {}
-        model = object_detection(imsz=512,odd_ths=4)
-        response['EfficientNet'] = model.predict(im)
+        response['EfficientNet'] = obj_detect_model.predict(im)
         # filter those data that is inside 
         # append .png to the end of response keys
         matching_key = [f"{xx}.png" for xx in response['EfficientNet'].keys()]
         Menu.objects.filter(img_name__in=matching_key).update(showmeal=True)
 
-        model = ocr()
-        response['EasyOCR'] = model.predict(im)
+        response['EasyOCR'] = easyocr_model.predict(im)
         matching_key = [xx for xx in response['EasyOCR'].keys()]
         database_key = [xx for xx in pd.DataFrame(Menu.objects.all().values())['ja_meal_name'].tolist()]
         # get except the last 
