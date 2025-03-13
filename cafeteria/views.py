@@ -10,14 +10,21 @@ from django.contrib.auth.decorators import user_passes_test, login_required
 from django.db.models import F, Value, Func
 from django.db.models.functions import Replace
 
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from google.oauth2 import service_account
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 
 from .langchain_wrapper import LLM_Service
 from .object_detection_wrapper import object_detection
 from .ocr_wrapper import ocr
+from .ocr_tamura_wrapper import GoogleOCR
 from time import sleep
 from PIL import Image
 import pandas as pd
 import Levenshtein
+import os
 
 import json
 
@@ -25,6 +32,28 @@ import json
 llm_model = LLM_Service()
 obj_detect_model = object_detection(imsz=512,odd_ths=4)
 easyocr_model = ocr()
+GCP_CLIENT_SECRET = os.getenv("GCP_CLIENT_SECRET")
+if GCP_CLIENT_SECRET == None:
+    GCP_CLIENT_SECRET = ''
+
+SCOPES = ["https://www.googleapis.com/auth/drive"]
+client_config = {
+    "installed":{
+        "client_id":"253879512770-0ot833ecqqo5ndk7a0me08u0upi2l931.apps.googleusercontent.com",
+        "project_id":"iconic-baton-453304-b6",
+        "auth_uri":"https://accounts.google.com/o/oauth2/auth",
+        "token_uri":"https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
+        "client_secret":GCP_CLIENT_SECRET,"redirect_uris":["http://localhost"]}}
+# Set up OAuth authentication
+flow = InstalledAppFlow.from_client_config(
+    client_config,  # Specify the OAuth client ID JSON obtained from GCP
+    SCOPES
+)
+credentials = flow.run_local_server(port=0)  # Open a login screen for authentication
+# Create a Google Drive API client
+drive_service = build("drive", "v3", credentials=credentials)
+googleocr_model = GoogleOCR()
 
 # Create your views here.
 def user(request):
@@ -167,6 +196,17 @@ def detect_current_menu_API(request):
 
     elif method == 'EasyOCR':
         response = easyocr_model.predict(im)
+        matching_key = [xx for xx in response.keys()]
+        database_key = [xx for xx in pd.DataFrame(Menu.objects.all().values())['ja_meal_name'].tolist()]
+        # get except the last 
+        matches = [
+            db_key for db_key in database_key
+            if any(Levenshtein.distance(db_key.replace('（大）', '').replace('（小）', '').replace('（中）', ''), key) <= 2 for key in matching_key)
+        ]
+        Menu.objects.filter(ja_meal_name__in=matches).update(showmeal=True)
+    elif method == 'GoogleOCR':
+        response = googleocr_model.predict(im)
+        print(response)
         matching_key = [xx for xx in response.keys()]
         database_key = [xx for xx in pd.DataFrame(Menu.objects.all().values())['ja_meal_name'].tolist()]
         # get except the last 
