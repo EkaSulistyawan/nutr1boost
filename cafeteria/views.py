@@ -195,24 +195,6 @@ def detect_current_menu_API(request):
         ]
         Menu.objects.filter(ja_meal_name__in=matches).update(showmeal=True)
 
-    elif method=='All':
-        response = {}
-        response['EfficientNet'] = obj_detect_model.predict(im)
-        # filter those data that is inside 
-        # append .png to the end of response keys
-        matching_key = [f"{xx}.png" for xx in response['EfficientNet'].keys()]
-        Menu.objects.filter(img_name__in=matching_key).update(showmeal=True)
-
-        response['EasyOCR'] = easyocr_model.predict(im)
-        matching_key = [xx for xx in response['EasyOCR'].keys()]
-        database_key = [xx for xx in pd.DataFrame(Menu.objects.all().values())['ja_meal_name'].tolist()]
-        # get except the last 
-        matches = [
-            db_key for db_key in database_key
-            if any(Levenshtein.distance(db_key.replace('（大）', '').replace('（小）', '').replace('（中）', ''), key) <= 2 for key in matching_key)
-        ]
-        Menu.objects.filter(ja_meal_name__in=matches).update(showmeal=True)
-
 
     return JsonResponse({'response':response})
 

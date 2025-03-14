@@ -3,3 +3,4 @@ __pycache__/
 amazon/*
 .history/*
 *.png
+obsolete/

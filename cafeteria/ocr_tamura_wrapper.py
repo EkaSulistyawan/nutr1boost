@@ -5,6 +5,11 @@ from tqdm import tqdm
 import pandas as pd
 from PIL import Image, ImageOps
 import numpy as np
+import os
+import io
+import requests
+import json
+import base64
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google.oauth2 import service_account
@@ -18,49 +23,49 @@ class GoogleOCR:
         self.imsz = imsz
 
         # self.drive_service is defined in the beginning of views
-        GCP_CLIENT_SECRET = os.getenv("GCP_CLIENT_SECRET")
-        if GCP_CLIENT_SECRET == None:
-            GCP_CLIENT_SECRET = ''
-
-        SCOPES = ["https://www.googleapis.com/auth/drive"]
-        client_config = {
-            "installed":{
-                "client_id":"253879512770-0ot833ecqqo5ndk7a0me08u0upi2l931.apps.googleusercontent.com",
-                "project_id":"iconic-baton-453304-b6",
-                "auth_uri":"https://accounts.google.com/o/oauth2/auth",
-                "token_uri":"https://oauth2.googleapis.com/token",
-                "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
-                "client_secret":GCP_CLIENT_SECRET,"redirect_uris":["http://localhost"]}}
-        # Set up OAuth authentication
-        flow = InstalledAppFlow.from_client_config(
-            client_config,  # Specify the OAuth client ID JSON obtained from GCP
-            SCOPES
-        )
-        credentials = flow.run_local_server(port=0)  # Open a login screen for authentication
-        # Create a Google Drive API client
-        self.drive_service = build("drive", "v3", credentials=credentials)
-
+        self.GCP_CLIENT_SECRET = os.getenv("GCP_CLIENT_SECRET")
+        if self.GCP_CLIENT_SECRET == None:
+            self.GCP_CLIENT_SECRET = ''
     
     def get_text_from_doc(self,doc_id):
         request = self.drive_service.files().export_media(fileId=doc_id, mimeType="text/plain")
         content = request.execute()
         return content.decode("utf-8")
 
-    def upload_image(self,image_path='temp.png'):
-        # file_metadata = {
-        #     "name": os.path.basename(image_path),
-        #     "parents":['1MT6I_Xw_EbpzUxl-2tAVCM3r16mIITZ-'],
-        #     "mimeType": "application/vnd.google-apps.document",
-        # }
-        media = MediaFileUpload(image_path, mimetype="image/png")
-        # file = self.drive_service.files().create(body=file_metadata, media_body=media, fields="id").execute()
-        updated_file = self.drive_service.files().update(
-            fileId='10SdTXRMXKe2OWIWVf8v7pc7B40kCwc-RH0go4jEUrzU',
-            media_body=media,  # The new file content you want to upload
-            fields="id"  # Specify the fields you want to retrieve (in this case, only the file ID)
-        ).execute()
+    def get_text_from_image(self,image_path='temp.png'):
+        try:
+            with io.open(image_path, 'rb') as image_file:
+                content = image_file.read()
 
-        return updated_file.get("id")
+            # Encode image to base64
+            encoded_image = base64.b64encode(content).decode('utf-8')
+
+            # Create JSON data for API request
+            url = f"https://vision.googleapis.com/v1/images:annotate?key={self.GCP_CLIENT_SECRET}"
+            headers = {"Content-Type": "application/json"}
+            data = {
+                "requests": [
+                    {
+                        "image": {"content": encoded_image},
+                        "features": [{"type": "TEXT_DETECTION"}]
+                    }
+                ]
+            }
+
+            # Call the API
+            response = requests.post(url, headers=headers, data=json.dumps(data))
+
+            # Parse the result
+            if response.status_code == 200:
+                result = response.json()
+                texts = result["responses"][0].get("textAnnotations", [])
+                return texts[0]["description"] if texts else ""
+            else:
+                print(f"API request error: {response.status_code} - {response.text}")
+                return ""
+        except Exception as e:
+            print(f"Error calling Google Cloud Vision API: {e}")
+            return ""
     
     def predict(self,im):
         npim = np.array(im)
@@ -81,8 +86,7 @@ class GoogleOCR:
                 patch_filename = f"temp.png"
                 patch_img.save(patch_filename)
 
-                id = self.upload_image(patch_filename)
-                text  = self.get_text_from_doc(id)
+                text = self.get_text_from_image(patch_filename)
 
                 for txt in text.split():
                     print(txt)
