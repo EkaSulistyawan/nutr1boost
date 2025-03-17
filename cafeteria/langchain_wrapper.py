@@ -79,6 +79,7 @@ class LLM_Service:
 
         class State(TypedDict):
             additional_notes :str
+            notes_history:List[str]
             detail_nutritions: List[str]
             min_nutritions: List[int]
             recommended_meal_detail: str
@@ -104,6 +105,7 @@ class LLM_Service:
                 "You are a nutritionist recommending the minimum intake of {nutrient} in {unit}.\n\n"
                 "**Guidelines:**\n"
                 "- Use notes from the user: {additional_notes}.\n"
+                "- Use previous notes if any: {notes_history}"
                 "- Use retrieve_papers to retrieve data from journals. Provide a scientific reason with citation in APA style.\n"
                 "- Use tavily_search_tool if you found dead end from retrieve_papers. add [WARNING] if use tavily_search_tool and cite the URL.\n"
                 "- Keep reasoning concise with just one sentence.\n"
@@ -155,6 +157,7 @@ class LLM_Service:
                 "- Do not add meal outside the menu.\n"
                 "- Include the exact name as listed under meal_name.\n"
                 "- Must return positive response."
+                "- Learn from previous notes if any: {notes_history}"
             )
         ])
 
@@ -192,8 +195,9 @@ class LLM_Service:
         graph_builder.add_edge(START, "initial_state")
         self.graph = graph_builder.compile()
     
-    def predict(self,query):
+    def predict(self,query,notes_history=[]):
         return self.graph.invoke({
             'additional_notes':query,
+            'notes_history':notes_history,
             'verbose_in_function':True
         })
