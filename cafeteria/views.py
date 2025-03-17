@@ -106,55 +106,65 @@ def recommend(request):
     query = request.POST['query']  # Get the search query (defaults to an empty string)
     model = LLM_Service()
     response = model.predict(query)
-    request.session['response'] = response
+    request.session['response'] = response # parse this 
     
     return JsonResponse({'redirect_url': reverse('user')})
 
 @csrf_exempt
 def request_current_menu_API(request):
     menus = pd.DataFrame(Menu.objects.filter(showmeal=True).values())
-    menus['variant'] = menus['meal_name'].str.extract(r"\((small|middle|large)\)", expand=True)
-    menus['variant'].fillna("single", inplace=True)
-    menus['meal_name'] = menus['meal_name'].str.replace(r"\s*\((small|middle|large)\)", "", regex=True)
-    menus['food_group'] = menus['meal_name'].factorize()[0] + 1
-    # Group by `meal_name` to create the desired JSON structure
-    result = []
-    for meal_name, group in menus.groupby("meal_name"):
-        food_item = {
-            "foodId": int(group["food_group"].iloc[0]),  # Get food_group (foodId)
-            "name": meal_name,
-            "url": f"/static/assets/img/{group['img_name'].iloc[0]}",  # Generate image URL
-            "variants": []
-        }
+    
+    if not menus.empty:
+        result = []
+        menus['variant'] = menus['meal_name'].str.extract(r"\((small|middle|large)\)", expand=True)
+        menus['variant'].fillna("single", inplace=True)
+        menus['meal_name'] = menus['meal_name'].str.replace(r"\s*\((small|middle|large)\)", "", regex=True)
+        menus['food_group'] = menus['meal_name'].factorize()[0] + 1
+        # Group by `meal_name` to create the desired JSON structure
         
-        # Add variants for the meal
-        for _, row in group.iterrows():
-            variant = {
-                "variantName": row["variant"].capitalize(),
-                "variantId": int(row["id"]),
-                "price": row["price"],
-                "calories": row["energy"],
-                "protein": row["protein"],
-                "fat": row["fat"],
-                "carbohydrates": row["carbohydrate"]
+        for meal_name, group in menus.groupby("meal_name"):
+            food_item = {
+                "foodId": int(group["food_group"].iloc[0]),  # Get food_group (foodId)
+                "name": meal_name,
+                "url": f"/static/assets/img/{group['img_name'].iloc[0]}",  # Generate image URL
+                "variants": []
             }
-            food_item["variants"].append(variant)
-        
-        result.append(food_item)
+            
+            # Add variants for the meal
+            for _, row in group.iterrows():
+                variant = {
+                    "variantName": row["variant"].capitalize(),
+                    "variantId": int(row["id"]),
+                    "price": row["price"],
+                    "calories": row["energy"],
+                    "protein": row["protein"],
+                    "fat": row["fat"],
+                    "carbohydrates": row["carbohydrate"]
+                }
+                food_item["variants"].append(variant)
+            
+            result.append(food_item)
 
-    # Construct the final JSON format
-    final_json = {
-        "category": "Meals",  # You can modify the category if necessary
-        "items": result
-    }
+        # Construct the final JSON format
+        final_json = [{
+            "category": "Meals",  # You can modify the category if necessary
+            "items": result
+        }]
+    else:
+        final_json = []
     print(final_json)
-    return JsonResponse(final_json)
+    return JsonResponse(final_json,safe=False)
 
 @csrf_exempt
 def request_recommendation_API(request):
     query = request.POST['query']  # Get the search query (defaults to an empty string)
-    response = llm_model.predict(query)
-    return JsonResponse({'response':response})
+    response = llm_model.predict(query) # parse this 
+    return JsonResponse({'response':response},safe=False)
+
+@csrf_exempt
+def reset_current_menu_API(request):
+    Menu.objects.update(showmeal=False)
+    return JsonResponse({'response':'succeed resetting the menu.'})
 
 
 @csrf_exempt
