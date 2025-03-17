@@ -158,7 +158,9 @@ def request_current_menu_API(request):
 @csrf_exempt
 def request_recommendation_API(request):
     query = request.POST['query']  # Get the search query (defaults to an empty string)
-    response = llm_model.predict(query) # parse this 
+    response = llm_model.predict(query) # parse this
+
+    # create structure the same as response['list_meals']
     return JsonResponse({'response':response},safe=False)
 
 @csrf_exempt
