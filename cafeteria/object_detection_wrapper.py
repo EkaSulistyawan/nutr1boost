@@ -36,6 +36,7 @@ class object_detection:
 
     def predict(self,im):
         npim = np.array(im)
+        # npim = np.rot90(npim, k=-1)
         step = self.imsz // 2  # 256-pixel overlap
 
 
@@ -43,7 +44,6 @@ class object_detection:
 
         for i in range(0, npim.shape[0] - self.imsz + 1, step):
             for j in range(0, npim.shape[1] - self.imsz + 1, step):
-                print(i,j)
                 # Crop the image patch
                 patch = npim[i:i + self.imsz, j:j + self.imsz]
 
@@ -51,10 +51,11 @@ class object_detection:
                 patch_im = Image.fromarray(patch)
                 patch_im = patch_im.transpose(Image.ROTATE_270)
                 patch_im = patch_im.convert('RGB')
-                prediction = self.model(self.transform(patch_im).unsqueeze(0)).detach()
-                prediction = F.softmax(prediction)
+                logits = self.model(self.transform(patch_im).unsqueeze(0)).detach()
+                prediction = F.softmax(logits,dim=1)
                 whichmenu = torch.argmax(prediction[0])
                 odd = torch.max(prediction[0])
+                print(i,j,logits.max(),prediction.max(),whichmenu,odd,self.odd_ths)
 
                 menuname = self.classes.columns.to_list()[whichmenu].replace('class_','')
                 # menuname = f"{menuname}.png"
@@ -63,5 +64,8 @@ class object_detection:
                         response[menuname] = odd.item()
                     elif odd > response[menuname]: # change the existing one if it has higher odd
                         response[menuname] = odd.item()
+
+                print(response)
+                
 
         return response

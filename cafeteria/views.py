@@ -30,8 +30,7 @@ import uuid
 import json
 
 # init model
-llm_model = LLM_Service()
-obj_detect_model = object_detection(imsz=512,odd_ths=4)
+obj_detect_model = object_detection(imsz=512,odd_ths=0.8)
 easyocr_model = ocr()
 googleocr_model = GoogleOCR()
 
@@ -157,6 +156,7 @@ def request_current_menu_API(request):
     return JsonResponse(final_json,safe=False)
 
 def parse_recommendation(request,history=[]):
+    llm_model = LLM_Service()
     query = request.POST['query']  # Get the search query (defaults to an empty string)
     response = llm_model.predict(query,history) # parse this
 
