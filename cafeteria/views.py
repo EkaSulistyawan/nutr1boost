@@ -126,7 +126,7 @@ def request_current_menu_API(request):
             food_item = {
                 "foodId": int(group["food_group"].iloc[0]),  # Get food_group (foodId)
                 "name": meal_name,
-                "url": f"/static/assets/img/{group['img_name'].iloc[0]}",  # Generate image URL
+                "url": f"http://34.229.85.230:8000/static/assets/img/{group['img_name'].iloc[0]}",  # Generate image URL
                 "variants": []
             }
             
@@ -157,7 +157,10 @@ def request_current_menu_API(request):
 
 def parse_recommendation(request,history=[]):
     llm_model = LLM_Service()
-    query = request.POST['query']  # Get the search query (defaults to an empty string)
+    try:
+        query = request.POST['query']  # Get the search query (defaults to an empty string)
+    except:
+        query = json.loads(request)['query']
     response = llm_model.predict(query,history) # parse this
 
     # create structure the same as response['list_meals']
@@ -180,7 +183,7 @@ def parse_recommendation(request,history=[]):
             food_item = {
                 "foodId": int(group["food_group"].iloc[0]),  # Get food_group (foodId)
                 "name": meal_name,
-                "url": f"/static/assets/img/{group['img_name'].iloc[0]}",  # Generate image URL
+                "url": f"http://34.229.85.230:8000/static/assets/img/{group['img_name'].iloc[0]}",  # Generate image URL
                 "variants": []
             }
             
@@ -197,13 +200,10 @@ def parse_recommendation(request,history=[]):
                 }
                 food_item["variants"].append(variant)
             
-            result.append(food_item)
+                result.append(int(row["id"])) # only save the variantID
 
         # Construct the final JSON format
-        final_json = [{
-            "category": "Meals",  # You can modify the category if necessary
-            "items": result
-        }]
+        final_json = result
     else:
         final_json = []
 
