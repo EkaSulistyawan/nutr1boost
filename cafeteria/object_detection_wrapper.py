@@ -7,6 +7,7 @@ import pandas as pd
 from PIL import Image
 import numpy as np
 import argparse
+import torch.nn.functional as F
 
 class object_detection:
     def __init__(self,odd_ths=2,imsz=512,device='cpu'):
@@ -51,6 +52,7 @@ class object_detection:
                 patch_im = patch_im.transpose(Image.ROTATE_270)
                 patch_im = patch_im.convert('RGB')
                 prediction = self.model(self.transform(patch_im).unsqueeze(0)).detach()
+                prediction = F.softmax(prediction)
                 whichmenu = torch.argmax(prediction[0])
                 odd = torch.max(prediction[0])
 
