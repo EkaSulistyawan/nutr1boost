@@ -10,7 +10,7 @@ import argparse
 import torch.nn.functional as F
 
 class object_detection:
-    def __init__(self,odd_ths=2,imsz=512,device='cpu'):
+    def __init__(self,odd_ths=0.8,imsz=512,device='cpu'):
         self.device = device
         # load classes
         class_path  = "./cafeteria/static/assets/classes.txt"
