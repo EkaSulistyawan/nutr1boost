@@ -155,12 +155,57 @@ def request_current_menu_API(request):
     print(final_json)
     return JsonResponse(final_json,safe=False)
 
+def generate_prompt_from_json(json_str):
+    import json
+    
+    # Parse the JSON string
+    data = json.loads(json_str)
+    
+    # Initialize the prompt
+    prompt = "the user has provided the following information about themselves\n"
+    
+    # Handle personal information based on BMR calculation method
+    if data["bmr_calculation_method"] == "default":
+        prompt += f"the user has chosen to use the default BMR target of {data['bmr']} kcal\n"
+    elif data["bmr_calculation_method"] == "custom":
+        prompt += f"the user has specified a custom bmr target of {data['bmr']} kcal\n"
+    elif data["bmr_calculation_method"] == "personal_info":
+        prompt += f"the user is {data['gender']}, age {data['age']}, height {data['height']}cm, weight {data['weight']}kg\n"
+        prompt += f"the user has specified their activity level to be {data['activity_level']}\n"
+        prompt += f"based on the above information, the calculated BMR target for the user is {data['bmr']} kcal\n"
+    
+    # Handle food preferences
+    if data.get("food_preferences") and data["food_preferences"].strip():
+        prompt += f"the user has specified their food preferences as: {data['food_preferences']}\n"
+    else:
+        prompt += "the user has not set any food preferences\n"
+    
+    # Handle food allergies
+    if data.get("food_allergies") and data["food_allergies"].strip():
+        prompt += f"the user has listed the following food allergies: {data['food_allergies']}\n"
+    else:
+        prompt += "the user has not listed any food allergies\n"
+    
+    # Handle additional notes
+    if data.get("additional_notes") and data["additional_notes"].strip():
+        prompt += f"the user has provided the following additional notes: {data['additional_notes']}\n"
+    else:
+        prompt += "the user has not provided any additional notes\n"
+    
+    return prompt.strip()
+
 def parse_recommendation(request,history=[]):
     llm_model = LLM_Service()
+    print('Raw query ', request.POST['query'])
     try:
-        query = request.POST['query']  # Get the search query (defaults to an empty string)
+        # Get the search query (defaults to an empty string)
+        query = generate_prompt_from_json(json.loads(request))
     except:
-        query = json.loads(request)['query']
+        query = request.POST['query']
+
+    print('query', query)
+        
+
     response = llm_model.predict(query,history) # parse this
 
     # create structure the same as response['list_meals']

@@ -23,24 +23,30 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'console': {
-            'level': 'DEBUG',  # Or 'INFO' depending on your needs
+            'level': 'DEBUG',  # Or 'INFO' depending on what you want to capture
             'class': 'logging.StreamHandler',
-            'stream': 'ext://sys.stdout',  # Logs will go to stdout
+            'stream': 'ext://sys.stdout',
         },
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',  # Or 'INFO' depending on your needs
-            'propagate': True,
+            'level': 'WARNING',  # Only log warning and higher for Django logs
+            'propagate': False,  # Avoid capturing too many details from other parts
         },
         'django.request': {
             'handlers': ['console'],
-            'level': 'DEBUG',  # Ensure requests are logged too
+            'level': 'DEBUG',  # Log all HTTP requests
+            'propagate': False,  # Avoid logging to higher-level handlers
+        },
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'WARNING',  # Log server-related messages at the warning level
             'propagate': False,
         },
     },
 }
+
 
 
 
