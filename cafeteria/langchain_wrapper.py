@@ -19,10 +19,14 @@ from langchain.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.tools import TavilySearchResults
 from langgraph.graph import START, StateGraph
-from langchain_core.prompts import ChatPromptTemplate,HumanMessagePromptTemplate
+from langchain_core.prompts import ChatPromptTemplate,HumanMessagePromptTemplate,SystemMessagePromptTemplate
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 from langchain_core.tools import tool
-from langchain_aws import ChatBedrock
+from langchain_aws import ChatBedrockConverse
+
+import langchain
+langchain.debug = True
+
 from .models import Menu
 
 from typing_extensions import List, TypedDict
@@ -69,9 +73,10 @@ class LLM_Service:
         #     max_retries=2,
         # )
         # Initialize Bedrock client
-        self.llm = ChatBedrock(
-            model_id="us.amazon.nova-pro-v1:0",  # Specify the model ID
-            model_kwargs={"temperature": 1.0, "max_tokens": None,"timeout": None, "max_retries": 2}
+        self.llm = ChatBedrockConverse(
+            model_id="us.anthropic.claude-3-7-sonnet-20250219-v1:0",  # Specify the model ID
+            temperature=1.0,
+            max_tokens=None,
         )
 
         self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
@@ -110,7 +115,7 @@ class LLM_Service:
                 "detail_nutritions":[],
                 "min_nutritions":[]
                 }
-        @tool
+        # @tool
         def retrieve_papers(query: str) -> str:
             """Retrieve relevant papers from the FAISS vector store based on the query."""
             print(f"Input retieve papers: {query}")
@@ -120,20 +125,24 @@ class LLM_Service:
             print(f"Retrieved docs: {retrieved_docs}")
             return "\n".join([doc.page_content for doc in retrieved_docs])
         
-        nutritionist_agent = self.llm.bind_tools([retrieve_papers,self.tavily_search_tool])
+        # nutritionist_agent = self.llm
+        nutritionist_agent = self.llm.bind_tools([self.tavily_search_tool])
+
         prompt_nutritionist = ChatPromptTemplate([
+            SystemMessagePromptTemplate.from_template(
+                "You are a highly knowledgeable and professional nutritionist. Your task is to recommend the minimum intake of a specific nutrient based on the user's needs. Your responses should be clear, concise, and scientifically backed, using credible references when possible. Ensure the recommendations are tailored to the user's profile and avoid unnecessary details."
+            ),
             HumanMessagePromptTemplate.from_template(
                 "You are a nutritionist recommending the minimum intake of {nutrient} in {unit}.\n\n"
                 "**Guidelines:**\n"
                 "- Use notes from the user: {additional_notes}.\n"
-                "- Use previous notes if any: {notes_history}"
-                "- Provide a scientific reason with citation in APA style.\n"
-                "- Use any internet article is the least allowed.\n"
-                "- Keep reasoning concise with just one sentence.\n"
+                "- Use previous notes if any: {notes_history}.\n"
+                "- If the information is unclear or insufficient, use tavily_search_tool for external references, adding [WARNING] and citing the URL.\n"
+                "- Provide a concise reasoning behind your recommendation in one sentence.\n"
                 "- Return the result strictly in JSON format.\n"
                 "- JSON fields:\n"
-                "  - `reason` (string): Include the scientific reason with APA citation.\n"
-                "  - `minimum` (integer): Provide the minimum intake.\n\n"
+                "  - `reason` (string): The scientific rationale with APA citation.\n"
+                "  - `minimum` (integer): The recommended minimum intake in {unit}.\n\n"
                 "**Output Format Example:**\n"
                 '{{\n'
                 '  "reason": "Based on user activity and journal by (Eka, 2020), higher calories are needed",\n'
@@ -142,6 +151,7 @@ class LLM_Service:
                 "**Now, return your recommendation in the exact JSON format as shown above. No extra text.**"
             )
         ])
+
         def generate_nutrition_from_paper(state: State):
             for idx in range(len(nutrient_list)):
                 state['nutrient'] = nutrient_list[idx]
