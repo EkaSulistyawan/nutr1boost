@@ -22,6 +22,7 @@ from langgraph.graph import START, StateGraph
 from langchain_core.prompts import ChatPromptTemplate,HumanMessagePromptTemplate
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 from langchain_core.tools import tool
+from langchain_aws import ChatBedrock
 from .models import Menu
 
 from typing_extensions import List, TypedDict
@@ -30,6 +31,8 @@ import os
 import pandas as pd
 from functools import partial
 from operator import itemgetter
+import boto3
+import json
 
 if os.getenv("GOOGLE_API_KEY") == None:
     GOOGLE_API_KEY = '<insert password!>'
@@ -41,6 +44,16 @@ if os.getenv("TAVILY_API_KEY") == None:
 else:
     TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 
+if os.getenv("AWS_ACCESS_KEY") == None:
+    AWS_ACCESS_KEY = '<insert password!>'
+else:
+    AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
+
+if os.getenv("AWS_SECRET_KEY") == None:
+    AWS_SECRET_KEY = '<insert password!>'
+else:
+    AWS_SECRET_KEY = os.getenv("AWS_SECRET_KEY")
+
 
 os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 os.environ["TAVILY_API_KEY"] = TAVILY_API_KEY
@@ -48,13 +61,19 @@ os.environ["TAVILY_API_KEY"] = TAVILY_API_KEY
 
 class LLM_Service:
     def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
-            temperature=1.0,
-            max_tokens=None,
-            timeout=None,
-            max_retries=2,
+        # self.llm = ChatGoogleGenerativeAI(
+        #     model="gemini-2.0-flash",
+        #     temperature=1.0,
+        #     max_tokens=None,
+        #     timeout=None,
+        #     max_retries=2,
+        # )
+        # Initialize Bedrock client
+        self.llm = ChatBedrock(
+            model_id="us.amazon.nova-pro-v1:0",  # Specify the model ID
+            model_kwargs={"temperature": 1.0, "max_tokens": None,"timeout": None, "max_retries": 2}
         )
+
         self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         self.tavily_search_tool = TavilySearchResults()
 
@@ -94,9 +113,11 @@ class LLM_Service:
         @tool
         def retrieve_papers(query: str) -> str:
             """Retrieve relevant papers from the FAISS vector store based on the query."""
+            print(f"Input retieve papers: {query}")
             # Use the FAISS retriever to search for documents
             retrieved_docs = paper_docs.similarity_search(query, k=3)  # Adjust 'k' for the number of papers to retrieve
             # Return a string of the top retrieved documents
+            print(f"Retrieved docs: {retrieved_docs}")
             return "\n".join([doc.page_content for doc in retrieved_docs])
         
         nutritionist_agent = self.llm.bind_tools([retrieve_papers,self.tavily_search_tool])
@@ -106,8 +127,8 @@ class LLM_Service:
                 "**Guidelines:**\n"
                 "- Use notes from the user: {additional_notes}.\n"
                 "- Use previous notes if any: {notes_history}"
-                "- Use retrieve_papers to retrieve data from journals. Provide a scientific reason with citation in APA style.\n"
-                "- Use tavily_search_tool if you found dead end from retrieve_papers. add [WARNING] if use tavily_search_tool and cite the URL.\n"
+                "- Provide a scientific reason with citation in APA style.\n"
+                "- Use any internet article is the least allowed.\n"
                 "- Keep reasoning concise with just one sentence.\n"
                 "- Return the result strictly in JSON format.\n"
                 "- JSON fields:\n"
@@ -129,7 +150,8 @@ class LLM_Service:
                 if state['verbose_in_function']: print('generate_nutrition_from_paper messages : ',messages)
                 response = nutritionist_agent.invoke(messages)
                 if state['verbose_in_function']: print('generate_nutrition_from_paper response : ',response)
-                cleaned_response = response.content.strip("`").strip('json').strip('\n\n')
+                cleaned_response = response.content.strip("`").strip('json').strip('\n\n') # changed
+                if state['verbose_in_function']: print('generate_nutrition_from_paper cleaned : ',cleaned_response)
                 cleaned_response = json.loads(cleaned_response)
                 state['detail_nutritions'].append(cleaned_response['reason'])
                 state['min_nutritions'].append(cleaned_response['minimum'])
