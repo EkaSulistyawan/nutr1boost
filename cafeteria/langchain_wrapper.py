@@ -170,15 +170,17 @@ class LLM_Service:
         prompt_meal_recommender = ChatPromptTemplate([
             HumanMessagePromptTemplate.from_template(
                 "Create and combine meals based on:\n"
-                "- **Request:** {additional_notes}\n"
+                "- **Must follow notes:** {additional_notes}\n"
                 "- **Nutrition:** {stringify_nutrient_recommendation}\n\n"
                 "**Guidelines:**\n"
                 "- Brief appeal for each dish.\n"
-                "- Quick note on how it meets user needs, include exact numbers. Be engaging to attract user!\n"
+                "- Be engaging to attract user!\n"
                 "- Combining meals are encouraged! Use the a-la carte in the menu to fill in the nutrition.\n"
                 "- Do not add meal outside the menu.\n"
                 "- Include the exact name as listed under meal_name.\n"
                 "- Must return positive response."
+                "- Avoid using special characters and markdown, such as *, _, or [ ].\n"
+                "- Look for personal preferrences in {additional_notes}.\n"
                 "- Learn from previous notes if any: {notes_history}"
             )
         ])
@@ -202,8 +204,11 @@ class LLM_Service:
                 if state['verbose_in_function']: print('generate_meal_set response : ',stringify_recommendation)
                 list_of_meal = [meal for meal in df['meal_name'].str.lower() if meal in response['output'].lower()]
 
+                ## remove (small) (middle) (large) from the recommended meal detail
+                recommended_meal_detail = response['output']
+                recommended_meal_detail = recommended_meal_detail.replace('*','')
             return {
-                'recommended_meal_detail':response['output'],
+                'recommended_meal_detail':recommended_meal_detail,
                 'list_meals':list_of_meal
             }
             

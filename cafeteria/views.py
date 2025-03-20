@@ -152,14 +152,14 @@ def request_current_menu_API(request):
         }]
     else:
         final_json = []
-    print(final_json)
     return JsonResponse(final_json,safe=False)
 
-def generate_prompt_from_json(json_str):
+def generate_prompt_from_json(request):
     import json
     
     # Parse the JSON string
-    data = json.loads(json_str)
+    print(request.POST['query'])
+    data = json.loads(request.POST['query'])
     
     # Initialize the prompt
     prompt = "the user has provided the following information about themselves\n"
@@ -191,19 +191,23 @@ def generate_prompt_from_json(json_str):
         prompt += f"the user has provided the following additional notes: {data['additional_notes']}\n"
     else:
         prompt += "the user has not provided any additional notes\n"
+
+    # handle cart_item
+    if data.get("cart_item") and data["cart_item"]:
+        preferred_meals = Menu.objects.filter(id__in=data['cart_item']).values()
+
+        # Format the meals into a readable string
+        preferred_meals_str = "\n".join([str(meal) for meal in preferred_meals])
+
+        prompt += f"Prioritize the following meal:\n{preferred_meals_str}\n"
+        
+    else:
+        prompt += "the user has no preference\n"
     
     return prompt.strip()
 
-def parse_recommendation(request,history=[]):
+def parse_recommendation(query,history=[]):
     llm_model = LLM_Service()
-    print('Raw query ', request.POST['query'])
-    try:
-        # Get the search query (defaults to an empty string)
-        query = generate_prompt_from_json(json.loads(request))
-    except:
-        query = request.POST['query']
-
-    print('query', query)
         
 
     response = llm_model.predict(query,history) # parse this
@@ -259,15 +263,30 @@ def parse_recommendation(request,history=[]):
 @csrf_exempt
 def request_recommendation_API(request):
     request.session['recommendation_response'] = []
-    response = parse_recommendation(request)
+    query = generate_prompt_from_json(request) # this will parse the query of dictionary to string
+    response = parse_recommendation(query)
     del response['notes_history']
     request.session['recommendation_response'].append(response)
-    return JsonResponse(request.session['recommendation_response'],safe=False)
+    print("request_recommendation_API: ",request.session['recommendation_response'])
+    return JsonResponse(response,safe=False)
 
 @csrf_exempt
 def get_new_recommendation_API(request):
-    request.session['recommendation_response'][-1]['rating'] = request.POST['rating']
-    response = parse_recommendation(request,request.session['recommendation_response'])
+    print('get_new_recommendation_API: ',json.loads(request.POST['rating']))
+    try:
+        # parse rating to string
+        # example rating
+        ratings = json.loads(request.POST['rating'])
+        stringify_rating = "Menu rating given by the user:\n"
+        for rating in ratings:
+            stringify_rating += f"{Menu.objects.get(id=rating['variant_id']).meal_name} : {rating['rating']}\n"
+        request.session['recommendation_response'][-1]['rating'] = stringify_rating
+        print("stringify_rating: ",stringify_rating)
+    except:
+        print("something went wrong")
+        request.session['recommendation_response'][-1]['rating'] = "unable to parse rating"
+        
+    response = parse_recommendation(request.session['recommendation_response'][0]['additional_notes'],request.session['recommendation_response'])
     del response['notes_history']
     request.session['recommendation_response'].append(response)
     return JsonResponse(request.session['recommendation_response'],safe=False)
