@@ -36,6 +36,7 @@ import pandas as pd
 from functools import partial
 from operator import itemgetter
 import boto3
+from botocore.config import Config
 import json
 
 if os.getenv("GOOGLE_API_KEY") == None:
@@ -76,8 +77,7 @@ class LLM_Service:
         self.llm = ChatBedrockConverse(
             model_id="us.anthropic.claude-3-7-sonnet-20250219-v1:0",  # Specify the model ID
             temperature=1.0,
-            max_tokens=None,
-            max_retries=None,
+            max_tokens=None
         )
 
         self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
@@ -128,43 +128,44 @@ class LLM_Service:
         
         nutritionist_agent = self.llm
         # nutritionist_agent = self.llm.bind_tools([self.tavily_search_tool])
-
         prompt_nutritionist = ChatPromptTemplate([
             SystemMessagePromptTemplate.from_template(
-                "You are a highly knowledgeable and professional nutritionist. Your task is to recommend the minimum intake of a specific nutrient based on the user's needs. Your responses should be clear, concise, and scientifically backed, using credible references when possible. Ensure the recommendations are tailored to the user's profile and avoid unnecessary details."
+                "You are a highly experienced nutritionist. Your task is to recommend the minimum intake of specific nutrients tailored to the user's profile. Ensure your responses are scientifically backed, clear, and concise. Provide credible references when possible, and avoid unnecessary details."
             ),
             HumanMessagePromptTemplate.from_template(
-                "You are a nutritionist recommending the minimum intake of {nutrient} in {unit}.\n\n"
+                "You are recommending the minimum intake of the following nutrients in their respective units:\n"
+                "{nutrient} in {unit}\n\n"
                 "**Guidelines:**\n"
-                "- Use notes from the user: {additional_notes}.\n"
-                "- Use previous notes if any: {notes_history}.\n"
-                "- Provide a concise reasoning behind your recommendation in one sentence.\n"
-                "- Return the result strictly in JSON format.\n"
-                "- JSON fields:\n"
-                "  - `reason` (string): The scientific rationale with APA citation.\n"
-                "  - `minimum` (integer): The recommended minimum intake in {unit}.\n\n"
+                "- Consider notes provided by the user: {additional_notes}.\n"
+                "- Include relevant historical information if available: {notes_history}.\n"
+                "- Provide one concise scientific rationale for each nutrient.\n"
+                "- Return the result strictly in JSON format. Ensure the order of the nutrients matches the input list: {nutrient}.\n"
+                "- Format the JSON output as follows:\n"
+                "  - `reason` (list of strings): Scientific rationale for each nutrient, with APA citation.\n"
+                "  - `minimum` (list of integers): Minimum intake recommendation for each nutrient.\n"
+                "\n"
                 "**Output Format Example:**\n"
                 '{{\n'
-                '  "reason": "Based on user activity and journal by (Eka, 2020), higher calories are needed",\n'
-                '  "minimum": 2200\n'
+                '  "reason": ["More calories are needed due to energy expenditure", "Protein is required for muscle repair"],\n'
+                '  "minimum": [2000, 60]\n'
                 '}}\n\n'
-                "**Now, return your recommendation in the exact JSON format as shown above. No extra text.**"
+                "**Ensure the output strictly follows this format and matches the order of the input list. Do not include any extra text.**"
             )
         ])
 
         def generate_nutrition_from_paper(state: State):
-            for idx in range(len(nutrient_list)):
-                state['nutrient'] = nutrient_list[idx]
-                state['unit'] = nutrient_unit[idx]
-                messages = prompt_nutritionist.invoke(state) # this is just formatting
-                if state['verbose_in_function']: print('generate_nutrition_from_paper messages : ',messages)
-                response = nutritionist_agent.invoke(messages)
-                if state['verbose_in_function']: print('generate_nutrition_from_paper response : ',response)
-                cleaned_response = response.content.strip("`").strip('json').strip('\n\n') # changed
-                if state['verbose_in_function']: print('generate_nutrition_from_paper cleaned : ',cleaned_response)
-                cleaned_response = json.loads(cleaned_response)
-                state['detail_nutritions'].append(cleaned_response['reason'])
-                state['min_nutritions'].append(cleaned_response['minimum'])
+            state['nutrient'] = nutrient_list
+            state['unit'] = nutrient_unit
+            messages = prompt_nutritionist.invoke(state) # this is just formatting
+            if state['verbose_in_function']: print('generate_nutrition_from_paper messages : ',messages)
+            response = nutritionist_agent.invoke(messages)
+            if state['verbose_in_function']: print('generate_nutrition_from_paper response : ',response)
+            cleaned_response = response.content.strip("`").strip('json').strip('\n\n') # changed
+            if state['verbose_in_function']: print('generate_nutrition_from_paper cleaned : ',cleaned_response)
+            cleaned_response = json.loads(cleaned_response)
+
+            state['detail_nutritions'] = cleaned_response['reason']
+            state['min_nutritions'] = cleaned_response['minimum']
 
             return state
 
@@ -178,20 +179,25 @@ class LLM_Service:
             4. GENERATING MEAL OFTEN FAIL, that's why there is while-loop inside.
         """
         prompt_meal_recommender = ChatPromptTemplate([
+            SystemMessagePromptTemplate.from_template(
+                "You are an expert meal planner creating personalized meal recommendations based on user preferences and nutritional needs. "
+                "Your responses should be engaging, appealing, and adhere strictly to the provided menu."
+            ),
             HumanMessagePromptTemplate.from_template(
-                "Create and combine meals based on:\n"
-                "- **Must follow notes:** {additional_notes}\n"
-                "- **Nutrition:** {stringify_nutrient_recommendation}\n\n"
+                "Generate a meal plan that aligns with the following criteria:\n"
+                "- **User Notes:** {additional_notes}\n"
+                "- **Nutritional Guidelines:** {stringify_nutrient_recommendation}\n"
+                "- **Meal History (if available):** {notes_history}\n\n"
                 "**Guidelines:**\n"
-                "- Brief appeal for each dish.\n"
-                "- Be engaging to attract user!\n"
-                "- Combining meals are encouraged! Use the a-la carte in the menu to fill in the nutrition.\n"
-                "- Do not add meal outside the menu.\n"
-                "- Include the exact name as listed under meal_name.\n"
-                "- Must return positive response."
-                "- Avoid using special characters and markdown, such as *, _, or [ ].\n"
-                "- Look for personal preferrences in {additional_notes}.\n"
-                "- Learn from previous notes if any: {notes_history}"
+                "1. Ensure all meals follow the given nutritional targets.\n"
+                "2. Combine meals creatively while staying within the available menu.\n"
+                "3. Maintain an engaging and positive tone to appeal to the user.\n"
+                "4. Do **not** include meals that are not explicitly listed in the menu.\n"
+                "5. Use exact names from the menu under `meal_name`.\n"
+                "6. Avoid special characters and markdown (e.g., *, _, or [ ]).\n"
+                "7. Consider personal preferences mentioned in {additional_notes}.\n"
+                "\n"
+                "Now, generate a meal plan that meets these criteria."
             )
         ])
 
