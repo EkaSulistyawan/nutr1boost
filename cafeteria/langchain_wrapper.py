@@ -93,11 +93,13 @@ class LLM_Service:
         menus = list(Menu.objects.all().values())
         df = pd.DataFrame(menus)
         df = df[df['showmeal'] == 1]
-        meal_recommender = create_pandas_dataframe_agent(self.llm, 
-                                                        df, 
-                                                        verbose=False,
-                                                        allow_dangerous_code=True,
-                                                        agent_executor_kwargs={"handle_parsing_errors": True})
+        # meal_recommender = create_pandas_dataframe_agent(self.llm, 
+        #                                                 df, 
+        #                                                 verbose=False,
+        #                                                 allow_dangerous_code=True,
+        #                                                 agent_executor_kwargs={"handle_parsing_errors": True})
+    
+        meal_recommender = self.llm
         
         nutrient_list = ['energy','protein','fat','carbohydrate','fiber','calcium','veggies']
         nutrient_unit = ['kcal','gr','gr','gr','gr','mg','gr']
@@ -180,26 +182,39 @@ class LLM_Service:
         """
         prompt_meal_recommender = ChatPromptTemplate([
             SystemMessagePromptTemplate.from_template(
-                "You are an expert meal planner creating personalized meal recommendations based on user preferences and nutritional needs. "
-                "Your responses should be engaging, appealing, and adhere strictly to the provided menu."
+                "You are a meal planner that creates meal recommendations based on nutritional needs. "
+                "Your goal is to combine meals in a way that meets the required nutrition while considering user preferences. "
+                "Your response must use only the meal names provided."
             ),
             HumanMessagePromptTemplate.from_template(
-                "Generate a meal plan that aligns with the following criteria:\n"
-                "- **User Notes:** {additional_notes}\n"
-                "- **Nutritional Guidelines:** {stringify_nutrient_recommendation}\n"
-                "- **Meal History (if available):** {notes_history}\n\n"
+                "Here is a list of available meals with their nutritional values:\n"
+                "{selected_meals}\n\n"
                 "**Guidelines:**\n"
-                "1. Ensure all meals follow the given nutritional targets.\n"
-                "2. Combine meals creatively while staying within the available menu.\n"
-                "3. Maintain an engaging and positive tone to appeal to the user.\n"
-                "4. Do **not** include meals that are not explicitly listed in the menu.\n"
-                "5. Use exact names from the menu under `meal_name`.\n"
-                "6. Avoid special characters and markdown (e.g., *, _, or [ ]).\n"
-                "7. Consider personal preferences mentioned in {additional_notes}.\n"
-                "\n"
-                "Now, generate a meal plan that meets these criteria."
+                "- Must follow user notes: {additional_notes}.\n"
+                "- Base recommendations on the target nutrition: {stringify_nutrient_recommendation}.\n"
+                "- Make meals appealing and engaging.\n"
+                "- Combine meals when needed to meet nutrition goals.\n"
+                "- **Only use meals from the provided list and keep meal names exactly as they appear.**\n"
+                "- Must output plain text, avoid special characters (e.g., *, _, [ ], #).\n"
+                "- Consider user preferences from {additional_notes}.\n"
+                "- Learn from previous recommendations if available: {notes_history}.\n\n"
+                "**Strict Rule:** The output meal recommendations **must only** contain meal names from the provided list."
             )
         ])
+
+        def format_meal_data(df):
+            """Convert the DataFrame into a structured text format optimized for Claude."""
+            return "\n".join([
+                f"{row['meal_name']} ({row['meal_type']}): {row['energy']} kcal, {row['protein']}g protein, "
+                f"{row['fat']}g fat, {row['carbohydrate']}g carbs, {row['fiber']}g fiber, {row['calcium']}mg calcium, "
+                f"{row['veggies']}g veggies"
+                for _, row in df.iterrows() if row['showmeal']  # Only include meals marked as visible
+            ])
+
+        def chunk_list(data, chunk_size=25):
+            """Split meal data into smaller chunks to avoid exceeding token limits."""
+            for i in range(0, len(data), chunk_size):
+                yield data[i:i + chunk_size]
 
         def generate_meal_set(state:State):
             # reformat the min range
@@ -208,6 +223,16 @@ class LLM_Service:
             attempt = 0
             while len(list_of_meal) == 0:
                 attempt +=1 
+                # Filter and format meals for Claude
+                meal_text = format_meal_data(df)
+
+                # If too large, split into chunks
+                meal_chunks = list(chunk_list(meal_text.split("\n"), chunk_size=20))  # Adjust chunk size if needed
+
+                # Select the first chunk for now (you can process others iteratively)
+                state["selected_meals"] = "\n".join(meal_chunks[0])
+
+
                 if state['verbose_in_function']: print('Cooking attempt : ',attempt)
                 stringify_recommendation = ""
                 for a in range(len(nutrient_list)):
@@ -217,11 +242,12 @@ class LLM_Service:
                 state["stringify_nutrient_recommendation"] = stringify_recommendation
 
                 response = meal_recommender.invoke(prompt_meal_recommender.invoke(state))
-                if state['verbose_in_function']: print('generate_meal_set response : ',stringify_recommendation)
-                list_of_meal = [meal for meal in df['meal_name'].str.lower() if meal in response['output'].lower()]
+                if state['verbose_in_function']: print('generate_meal_set response : ',response)
+
+                list_of_meal = [meal for meal in df['meal_name'].str.lower() if meal in response.content.lower()]
 
                 ## remove (small) (middle) (large) from the recommended meal detail
-                recommended_meal_detail = response['output']
+                recommended_meal_detail = response.content
                 recommended_meal_detail = recommended_meal_detail.replace('*','')
             return {
                 'recommended_meal_detail':recommended_meal_detail,
