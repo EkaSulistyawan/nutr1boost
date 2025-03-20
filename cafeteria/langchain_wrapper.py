@@ -77,6 +77,7 @@ class LLM_Service:
             model_id="us.anthropic.claude-3-7-sonnet-20250219-v1:0",  # Specify the model ID
             temperature=1.0,
             max_tokens=None,
+            max_retries=None,
         )
 
         self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
@@ -125,8 +126,8 @@ class LLM_Service:
             print(f"Retrieved docs: {retrieved_docs}")
             return "\n".join([doc.page_content for doc in retrieved_docs])
         
-        # nutritionist_agent = self.llm
-        nutritionist_agent = self.llm.bind_tools([self.tavily_search_tool])
+        nutritionist_agent = self.llm
+        # nutritionist_agent = self.llm.bind_tools([self.tavily_search_tool])
 
         prompt_nutritionist = ChatPromptTemplate([
             SystemMessagePromptTemplate.from_template(
@@ -137,7 +138,6 @@ class LLM_Service:
                 "**Guidelines:**\n"
                 "- Use notes from the user: {additional_notes}.\n"
                 "- Use previous notes if any: {notes_history}.\n"
-                "- If the information is unclear or insufficient, use tavily_search_tool for external references, adding [WARNING] and citing the URL.\n"
                 "- Provide a concise reasoning behind your recommendation in one sentence.\n"
                 "- Return the result strictly in JSON format.\n"
                 "- JSON fields:\n"
