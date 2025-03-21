@@ -1,6 +1,8 @@
 
 # Table of Contents
+- [About](#about)
 - [Table of Contents](#table-of-contents)
+- [Docker Preparation](#docker-preparation)
 - [List of URLs](#list-of-urls)
 - [API Specification](#api-specification)
   - [\>\>\>\>\> Retrieve current menu](#retrieve-current-menu)
@@ -8,7 +10,36 @@
   - [\>\>\>\>\> Get new recommendation](#get-new-recommendation)
   - [\>\>\>\>\> Detect and set current menu](#detect-and-set-current-menu)
   - [\>\>\>\>\> Reset current menu](#reset-current-menu)
-- [Docker Preparation](#docker-preparation)
+
+# About
+No more hassle to eat at the cafeteria! You can make your order, see the menu and ask AI to get the meal for you! Enjoy our CafeterAI :)
+
+This project is a product of BOOST Team 1, thanks for your contributions!
+[![Contributors](https://contrib.rocks/image?repo=EkaSulistyawan/nutr1boost)](https://github.com/EkaSulistyawan/nutr1boost/graphs/contributors)
+
+# Docker Preparation
+
+Make sure you install docker and run the service. [Getting started with Docker](https://docs.docker.com/desktop/setup/install/windows-install/)
+
+Step to reproduce docker image (tested on Windows 11)
+
+(1) Clone the repo
+
+(2) Go to directory where `Dockerfile` is stored
+
+(3) Run the following script on command prompt to make the image,
+```
+docker build -t nutr1boost:1.0 .
+```
+
+(4) Run the following script in command prompt to run the image
+```
+docker run -it -p 127.0.0.1:8000:8000 -e GOOGLE_API_KEY=<your gemini api key> -e TAVILY_API_KEY=<your tavily key> nutr1boost:1.0
+```
+
+This step sets up everything you need to run the LLM. If you wish to change any interface of the LLM, you may want to modify the file where the LLM is used. `cafeteria/langchain_wrapper.py`
+
+(5) Open browser and go to `127.0.0.1:8000`
 
 # List of URLs
 |URL|Description|Output|
@@ -380,28 +411,3 @@ only simple JSON showing `succeed resetting the menu.`. But, when you go to the 
     "response": "succeed resetting the menu."
 }
 ```
-
-
-# Docker Preparation
-
-Make sure you install docker and run the service. [Getting started with Docker](https://docs.docker.com/desktop/setup/install/windows-install/)
-
-Step to reproduce docker image (tested on Windows 11)
-
-(1) Clone the repo
-
-(2) Go to directory where `Dockerfile` is stored
-
-(3) Run the following script on command prompt to make the image,
-```
-docker build -t nutr1boost:1.0 .
-```
-
-(4) Run the following script in command prompt to run the image
-```
-docker run -it -p 127.0.0.1:8000:8000 -e GOOGLE_API_KEY=<your gemini api key> -e TAVILY_API_KEY=<your tavily key> nutr1boost:1.0
-```
-
-This step sets up everything you need to run the LLM. If you wish to change any interface of the LLM, you may want to modify the file where the LLM is used. `cafeteria/langchain_wrapper.py`
-
-(5) Open browser and go to `127.0.0.1:8000`
