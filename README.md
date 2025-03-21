@@ -374,7 +374,7 @@ List of structure same with [`api/request_recommendation`](#do-recommendation), 
 ```
 
 ## Detect and set current menu
-This API will use either OCR/EfficientNet
+![AutomaticMenuParse](external/ocr.jpg)
 
 **Method**: `POST`
 
