@@ -49,7 +49,7 @@ LOGGING = {
 
 
 
-
+SESSION_COOKIE_AGE = 3600  # Timeout in seconds (1 hour)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 

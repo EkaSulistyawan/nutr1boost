@@ -28,6 +28,7 @@ import os
 import uuid
 
 import json
+import datetime
 
 # init model
 obj_detect_model = object_detection(imsz=512,odd_ths=0.8)
@@ -115,41 +116,54 @@ def request_current_menu_API(request):
     menus = pd.DataFrame(Menu.objects.filter(showmeal=True).values())
     
     if not menus.empty:
-        result = []
+
+        # Extract variant from meal_name
         menus['variant'] = menus['meal_name'].str.extract(r"\((small|middle|large)\)", expand=True)
         menus['variant'].fillna("single", inplace=True)
         menus['meal_name'] = menus['meal_name'].str.replace(r"\s*\((small|middle|large)\)", "", regex=True)
         menus['food_group'] = menus['meal_name'].factorize()[0] + 1
-        # Group by `meal_name` to create the desired JSON structure
-        
-        for meal_name, group in menus.groupby("meal_name"):
-            food_item = {
-                "foodId": int(group["food_group"].iloc[0]),  # Get food_group (foodId)
-                "name": meal_name,
-                "url": f"http://34.229.85.230:8000/static/assets/img/{group['img_name'].iloc[0]}",  # Generate image URL
-                "variants": []
-            }
-            
-            # Add variants for the meal
-            for _, row in group.iterrows():
-                variant = {
-                    "variantName": row["variant"].capitalize(),
-                    "variantId": int(row["id"]),
-                    "price": row["price"],
-                    "calories": row["energy"],
-                    "protein": row["protein"],
-                    "fat": row["fat"],
-                    "carbohydrates": row["carbohydrate"]
-                }
-                food_item["variants"].append(variant)
-            
-            result.append(food_item)
 
-        # Construct the final JSON format
-        final_json = [{
-            "category": "Meals",  # You can modify the category if necessary
-            "items": result
-        }]
+        # Group by `meal_type` first
+        categorized_menus = {}
+
+        for meal_type, meal_group in menus.groupby("meal_type"):
+            category_items = []
+
+            for meal_name, group in meal_group.groupby("meal_name"):
+                food_item = {
+                    "foodId": int(group["food_group"].iloc[0]),
+                    "name": meal_name,
+                    "url": f"http://34.229.85.230:8000/static/assets/img/{group['img_name'].iloc[0]}",
+                    "variants": []
+                }
+
+                # Add variants for the meal
+                for _, row in group.iterrows():
+                    variant = {
+                        "variantName": row["variant"].capitalize(),
+                        "variantId": int(row["id"]),
+                        "price": row["price"],
+                        "calories": row["energy"],
+                        "protein": row["protein"],
+                        "fat": row["fat"],
+                        "carbohydrates": row["carbohydrate"]
+                    }
+                    food_item["variants"].append(variant)
+
+                category_items.append(food_item)
+
+            categorized_menus[meal_type] = category_items
+
+        priority_category = "main"  # Change this to any category you want at the front
+
+        sorted_categories = sorted(
+            categorized_menus.keys(),
+            key=lambda x: (x != priority_category, x)
+        )
+        # Convert to JSON format
+        final_json = [{"category": category.capitalize(), "items": categorized_menus[category]} for category in sorted_categories]
+
+        print(final_json)
     else:
         final_json = []
     return JsonResponse(final_json,safe=False)
@@ -207,10 +221,10 @@ def generate_prompt_from_json(request):
     return prompt.strip()
 
 def parse_recommendation(query,history=[]):
+    print("Entry parse recommendation: ",datetime.datetime.now())
     llm_model = LLM_Service()
-        
-
     response = llm_model.predict(query,history) # parse this
+    print("After prediction: ",datetime.datetime.now())
 
     # create structure the same as response['list_meals']
     
@@ -258,6 +272,8 @@ def parse_recommendation(query,history=[]):
 
     response['recommended_meals'] = final_json
     response['id'] = str(uuid.uuid4())
+    print("Return: ",datetime.datetime.now())
+
     return response
 
 @csrf_exempt
@@ -266,12 +282,20 @@ def request_recommendation_API(request):
     query = generate_prompt_from_json(request) # this will parse the query of dictionary to string
     response = parse_recommendation(query)
     del response['notes_history']
-    request.session['recommendation_response'].append(response)
-    print("request_recommendation_API: ",request.session['recommendation_response'])
+    # Retrieve, modify, and reassign session data
+    recommendation_list = request.session.get('recommendation_response', [])
+    recommendation_list.append(response)
+    print("list to be saved: ",recommendation_list)
+    request.session['recommendation_response'] = recommendation_list
+    request.session.save()
+    request.session.modified = True
+
+    print("request_recommendation_API: ", request.session['recommendation_response'])
     return JsonResponse(response,safe=False)
 
 @csrf_exempt
 def get_new_recommendation_API(request):
+    print("Whats inside the session: ",request.session['recommendation_response'])
     print('get_new_recommendation_API: ',json.loads(request.POST['rating']))
     try:
         # parse rating to string
@@ -289,7 +313,7 @@ def get_new_recommendation_API(request):
     response = parse_recommendation(request.session['recommendation_response'][0]['additional_notes'],request.session['recommendation_response'])
     del response['notes_history']
     request.session['recommendation_response'].append(response)
-    return JsonResponse(request.session['recommendation_response'],safe=False)
+    return JsonResponse(response,safe=False)
 
 @csrf_exempt
 def reset_current_menu_API(request):
