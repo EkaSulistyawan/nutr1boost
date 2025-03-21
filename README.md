@@ -1,4 +1,4 @@
-
+![Demo](external/demo.gif)
 # Table of Contents
 - [About](#about)
 - [Table of Contents](#table-of-contents)
@@ -15,7 +15,12 @@
 No more hassle to eat at the cafeteria! You can make your order, see the menu and ask AI to get the meal for you! Enjoy our CafeterAI :)
 
 This project is a product of BOOST Team 1, thanks for your contributions!
-[![Contributors](https://contrib.rocks/image?repo=EkaSulistyawan/nutr1boost)](https://github.com/EkaSulistyawan/nutr1boost/graphs/contributors)
+
+[EkaSulistyawan](https://github.com/EkaSulistyawan), [Subaru Kimura](https://github.com/blackdoor571), [Zhaoqian Wang](https://github.com/mkx173), [Yuki Tamura](https://github.com/Yuki-Tamura56)
+
+**Checkout our published APP and additional project!**
+- Android APP for the API! [Project Page](https://github.com/mkx173/CafeteriaAI)
+- Google OCR text recognition, makes the menu assignment easier than manual entry! [Project Page](https://github.com/Yuki-Tamura56/Text-extraction)
 
 # Docker Preparation
 
